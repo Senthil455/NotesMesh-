@@ -3,17 +3,18 @@ import {
   FileText, 
   Share2, 
   Layout, 
+  FileSpreadsheet,
+  Settings,
   Search, 
   Plus, 
   Sun, 
   Moon, 
   Puzzle, 
-  Settings, 
   Github,
   Command
 } from 'lucide-react';
 
-export type ActiveTab = 'notes' | 'graph' | 'canvas';
+export type ActiveTab = 'notes' | 'graph' | 'canvas' | 'templates' | 'settings';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -23,7 +24,6 @@ interface NavbarProps {
   onNewNote: () => void;
   onOpenCommandPalette: () => void;
   onOpenPlugins: () => void;
-  onOpenSettings: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -34,20 +34,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNewNote,
   onOpenCommandPalette,
   onOpenPlugins,
-  onOpenSettings,
 }) => {
   return (
     <header className="h-14 border-b border-border bg-surface px-4 flex items-center justify-between select-none z-20">
-      {/* Brand & Tabs */}
+      {/* Brand & 5 Main Navigation Tabs */}
       <div className="flex items-center space-x-6">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-sm">
             <Share2 className="w-4 h-4" />
           </div>
           <div>
             <div className="font-bold text-sm tracking-tight flex items-center gap-1.5">
               <span>NoteMesh</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 bg-blue-500/10 text-primary border border-blue-500/20 rounded">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 bg-primary/10 text-primary border border-primary/20 rounded">
                 v0.1 OSS
               </span>
             </div>
@@ -57,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
+        {/* View Switcher: Notes, Knowledge Graph, Canvas, Templates, Settings */}
         <nav className="flex items-center space-x-1 bg-surface-hover/80 p-1 rounded-lg border border-border">
           <button
             onClick={() => setActiveTab('notes')}
@@ -92,13 +91,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Layout className="w-3.5 h-3.5" />
-            <span>Visual Canvas</span>
+            <span>Canvas</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === 'templates'
+                ? 'bg-surface text-primary shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Templates</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === 'settings'
+                ? 'bg-surface text-primary shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Settings</span>
           </button>
         </nav>
       </div>
 
       {/* Middle: Quick Switcher / Search Trigger */}
-      <div className="hidden md:flex items-center">
+      <div className="hidden lg:flex items-center">
         <button
           onClick={onOpenCommandPalette}
           className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-border bg-surface-hover/50 hover:bg-surface-hover text-xs text-gray-500 dark:text-gray-400 w-64 justify-between transition-colors shadow-sm"
@@ -117,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center space-x-2">
         <button
           onClick={onNewNote}
-          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium shadow-sm shadow-blue-500/25 transition-colors"
+          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium shadow-sm transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">New Note</span>
@@ -139,14 +162,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 rounded-lg hover:bg-surface-hover transition-colors"
         >
           {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        <button
-          onClick={onOpenSettings}
-          title="Settings & Data Export"
-          className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 rounded-lg hover:bg-surface-hover transition-colors"
-        >
-          <Settings className="w-4 h-4" />
         </button>
 
         <a

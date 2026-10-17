@@ -548,7 +548,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                         fontWeight="600"
                         fontFamily="Inter, sans-serif"
                       >
-                        📄 {el.linkedNoteTitle || 'Note'}
+                        {el.linkedNoteTitle || 'Note'}
                       </text>
                     </g>
                   )}

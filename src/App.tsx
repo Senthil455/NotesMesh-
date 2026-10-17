@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Note } from './core/domain/note';
 import { CanvasDocument } from './core/domain/canvas';
+import { NoteTemplate } from './core/domain/template';
 import { storage } from './core/storage/localStorageAdapter';
 import { buildBacklinks, extractTags } from './core/markdown/wikilinks';
 import { pluginManager, StatusBarItem } from './core/plugins/pluginManager';
@@ -12,9 +13,10 @@ import { Sidebar } from './components/Sidebar';
 import { NoteEditor } from './features/notes/NoteEditor';
 import { KnowledgeGraphView } from './features/graph/KnowledgeGraphView';
 import { CanvasWorkspace } from './features/canvas/CanvasWorkspace';
+import { TemplatesView } from './features/templates/TemplatesView';
+import { SettingsView } from './features/settings/SettingsView';
 import { CommandPalette } from './components/CommandPalette';
 import { PluginSettingsModal } from './features/plugins/PluginSettingsModal';
-import { SettingsModal } from './features/settings/SettingsModal';
 
 export const App: React.FC = () => {
   // Theme state
@@ -22,11 +24,10 @@ export const App: React.FC = () => {
     return localStorage.getItem('notemesh_theme') !== 'light';
   });
 
-  // App navigation state
+  // App navigation state (5 main views)
   const [activeTab, setActiveTab] = useState<ActiveTab>('notes');
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isPluginsModalOpen, setIsPluginsModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Notes & Canvas data
   const [notes, setNotes] = useState<Note[]>([]);
@@ -106,6 +107,28 @@ export const App: React.FC = () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
+    storage.saveNote(newNote);
+    setNotes(prev => [newNote, ...prev]);
+    setActiveNoteId(newNote.id);
+    setActiveTab('notes');
+  };
+
+  const handleCreateNoteFromTemplate = (template: NoteTemplate, customTitle?: string) => {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const title = customTitle || `${template.name} - ${dateStr}`;
+    const content = template.templateContent({ title, dateStr });
+
+    const newNote: Note = {
+      id: `note-${Date.now()}`,
+      title,
+      content,
+      tags: [...template.tags],
+      folder: template.folder,
+      isPinned: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
     storage.saveNote(newNote);
     setNotes(prev => [newNote, ...prev]);
     setActiveNoteId(newNote.id);
@@ -206,7 +229,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // If not found, create new note with that title
     handleCreateNewNote(noteIdOrTitle);
   };
 
@@ -228,7 +250,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background overflow-hidden">
-      {/* Top Navigation */}
+      {/* Top Navigation Bar with 5 main views */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -237,7 +259,6 @@ export const App: React.FC = () => {
         onNewNote={() => handleCreateNewNote()}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenPlugins={() => setIsPluginsModalOpen(true)}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
       />
 
       {/* Main Workspace Body */}
@@ -289,6 +310,22 @@ export const App: React.FC = () => {
             isDarkMode={isDarkMode}
           />
         )}
+
+        {activeTab === 'templates' && (
+          <TemplatesView
+            onCreateNoteFromTemplate={handleCreateNoteFromTemplate}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsView
+            isDarkMode={isDarkMode}
+            toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+            notes={notes}
+            canvases={canvases}
+            onDataReload={loadData}
+          />
+        )}
       </div>
 
       {/* Bottom Status Bar for Extensions */}
@@ -333,15 +370,6 @@ export const App: React.FC = () => {
       <PluginSettingsModal
         isOpen={isPluginsModalOpen}
         onClose={() => setIsPluginsModalOpen(false)}
-      />
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
-        onDataReload={loadData}
       />
     </div>
   );

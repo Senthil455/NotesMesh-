@@ -1,37 +1,67 @@
-import { marked } from 'marked';
+import { Marked, Tokens } from 'marked';
 
-/**
- * Configure marked options for clean GitHub-like markdown
- */
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-});
+interface WikilinkToken {
+  type: 'wikilink';
+  raw: string;
+  target: string;
+  alias: string;
+}
 
-/**
- * Transform raw Markdown containing [[wikilinks]] and #tags into HTML.
- */
-export function renderMarkdown(
-  markdown: string,
-  existingTitles: Set<string>
-): string {
-  // 1. Replace [[Target]] or [[Target|Alias]] with custom span/link tags
-  const processed = markdown.replace(/\[\[([^[\]]+?)\]\]/g, (_, match) => {
-    const parts = match.split('|');
-    const target = parts[0].trim();
-    const alias = (parts[1] ? parts[1].trim() : target);
-    const exists = existingTitles.has(target.toLowerCase());
-
-    const statusClass = exists
-      ? 'text-primary hover:underline bg-primary/10 border-primary/30'
-      : 'text-amber-500 hover:underline bg-amber-500/10 border-dashed border-amber-500/40';
-
-    return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer border wikilink-pill ${statusClass}" data-wikilink="${escapeHtml(target)}">[[${escapeHtml(alias)}]]</span>`;
+export function createMarkedInstance(existingTitles: Set<string>) {
+  const m = new Marked({
+    gfm: true,
+    breaks: true,
   });
 
-  // 2. Parse using marked
-  const rawHtml = marked.parse(processed, { async: false }) as string;
-  return rawHtml;
+  m.use({
+    extensions: [
+      {
+        name: 'wikilink',
+        level: 'inline',
+        start(src: string) {
+          return src.indexOf('[[');
+        },
+        tokenizer(src: string): WikilinkToken | undefined {
+          const rule = /^\[\[([^[\]]+?)\]\]/;
+          const match = rule.exec(src);
+          if (match) {
+            const rawInner = match[1].trim();
+            const parts = rawInner.split('|');
+            const target = parts[0].trim();
+            const alias = parts[1] ? parts[1].trim() : target;
+            return {
+              type: 'wikilink',
+              raw: match[0],
+              target,
+              alias,
+            };
+          }
+        },
+        renderer(token: Tokens.Generic) {
+          const wikilink = token as unknown as WikilinkToken;
+          const target = wikilink.target || '';
+          const alias = wikilink.alias || target;
+          const exists = existingTitles.has(target.toLowerCase());
+
+          const statusClass = exists
+            ? 'text-primary hover:underline bg-primary/10 border-primary/30'
+            : 'text-amber-500 hover:underline bg-amber-500/10 border-dashed border-amber-500/40';
+
+          const escapedTarget = escapeHtml(target);
+          const escapedAlias = escapeHtml(alias);
+
+          return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer border wikilink-pill ${statusClass}" data-wikilink="${escapedTarget}">[[${escapedAlias}]]</span>`;
+        },
+      },
+    ],
+  });
+
+  return m;
+}
+
+export function renderMarkdown(markdown: string, existingTitles: Set<string>): string {
+  const instance = createMarkedInstance(existingTitles);
+  return instance.parse(markdown) as string;
 }
 
 function escapeHtml(str: string): string {

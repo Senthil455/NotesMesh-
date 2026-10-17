@@ -5,6 +5,7 @@ import {
   resolveWikilinks, 
   buildBacklinks 
 } from '../core/markdown/wikilinks';
+import { renderMarkdown } from '../core/markdown/parser';
 import { Note } from '../core/domain/note';
 
 describe('Wikilinks Parser & Backlink Resolver', () => {
@@ -73,5 +74,17 @@ describe('Wikilinks Parser & Backlink Resolver', () => {
     expect(backlinks[0].sourceNoteId).toBe('a');
     expect(backlinks[0].sourceNoteTitle).toBe('Note A');
     expect(backlinks[0].previewSnippet).toContain('Note B');
+  });
+
+  it('correctly parses wikilinks outside code and preserves code backticks without raw HTML spans', () => {
+    const markdown = 'When Note A links to Note B via `[[Note B]]`, check [[Real Target]].';
+    const existingTitles = new Set(['real target']);
+    const html = renderMarkdown(markdown, existingTitles);
+
+    // Code backtick must preserve `[[Note B]]` as code content without <span class="wikilink-pill">
+    expect(html).toContain('<code>[[Note B]]</code>');
+    // Real wikilink outside code must be parsed as a wikilink pill
+    expect(html).toContain('data-wikilink="Real Target"');
+    expect(html).not.toContain('&lt;span class=');
   });
 });

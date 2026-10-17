@@ -7,6 +7,8 @@ import {
   FileText, 
   Share2, 
   Layout, 
+  FileSpreadsheet,
+  Settings,
   Plus, 
   Terminal, 
   Sun, 
@@ -194,6 +196,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               >
                 <Layout className="w-4 h-4 text-purple-500" />
                 <span className="font-medium">Open Visual Canvas</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  onSelectTab('templates');
+                  onClose();
+                }}
+                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium">Open Note Templates</span>
+              </div>
+
+              <div
+                onClick={() => {
+                  onSelectTab('settings');
+                  onClose();
+                }}
+                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+              >
+                <Settings className="w-4 h-4 text-gray-500" />
+                <span className="font-medium">Open Workspace Settings</span>
               </div>
 
               <div

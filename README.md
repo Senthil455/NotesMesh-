@@ -1,6 +1,6 @@
 <div align="center">
 
-# NoteMesh 🕸️🎨📝
+# NoteMesh
 ### *Write your ideas. Connect your knowledge. Draw the bigger picture. Extend everything.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
@@ -12,57 +12,58 @@
 
 **NoteMesh** is a local-first, open-source personal knowledge workspace. It unifies **Markdown notes**, **bidirectional wikilinks**, an interactive **knowledge graph**, and a freeform **visual canvas**—built to stay portable and grow through community extensions.
 
-[Getting Started](#-quickstart) • [Features](#-core-features) • [Open Source Roadmap](#-community-roadmap--good-first-issues) • [Contributing](#-contributing) • [Ethics & Principles](#-ethics--data-sovereignty)
+[Quickstart](#quickstart) • [Core Features](#core-features--current-status) • [Open Source Roadmap](#community-roadmap--good-first-issues) • [Contributing](#contributing) • [Ethics & Principles](#ethics--data-sovereignty)
 
 </div>
 
 ---
 
-## 💡 Why NoteMesh?
+## Why NoteMesh?
 
 Most productivity tools scatter your knowledge: notes live in one tool, mind maps in another, flowcharts in a third, and relationship graphs are locked in proprietary cloud databases.
 
-**NoteMesh solves this through three connected pillars:**
-1. **📝 Markdown Notes**: Portable, distraction-free writing with `[[wikilinks]]`, automatic backlinks discovery, tags, and folders.
-2. **🕸️ Knowledge Graph**: An interactive, physics-driven visualization revealing clusters, connections, and missing concepts in real time.
-3. **🎨 Visual Canvas**: Freeform whiteboard diagramming with shapes, sticky notes, connectors, and **Linked Note Cards** that open actual notes directly from the board.
-4. **🔌 Extensible Foundation**: Sandboxed plugins, command palette integration, and community themes.
+**NoteMesh solves this through five connected pillars:**
+1. **Markdown Notes**: Portable, distraction-free writing with `[[wikilinks]]`, automatic backlinks discovery, tags, and nested folders.
+2. **Knowledge Graph**: An interactive, physics-driven visualization revealing clusters, connections, and missing concepts in real time.
+3. **Visual Canvas**: Freeform whiteboard diagramming with shapes, sticky notes, connectors, and **Linked Note Cards** that open actual notes directly from the board.
+4. **Note Templates**: Standardized templates for Daily Notes, Meeting Minutes, Architecture Decision Records (ADRs), and Research Notes.
+5. **Extensible Architecture**: Sandboxed plugins, command palette integration, and community themes.
 
 ---
 
-## 🌟 Core Features & Current Status
+## Core Features & Current Status
 
 | Feature Pillar | Capability | Status | Reference |
 | :--- | :--- | :--- | :--- |
-| **Markdown Notes** | Full GFM editor, live split preview, folder organization, tag filtering | ✅ **Shipped** | `src/features/notes/` |
-| **Bidirectional Links** | `[[Note Title]]` & `[[Note|Alias]]` parsing, automatic backlinks panel | ✅ **Shipped** | `src/core/markdown/` |
-| **Note Templates** | Daily Notes, Meeting Minutes, ADRs, Research Notes with 1-click insertion | ✅ **Shipped** | `src/core/templates/` |
-| **Knowledge Graph** | Physics simulation, Color by Type/Folder/Tag, in-graph search, orphan toggles | ✅ **Shipped** | `src/features/graph/` |
-| **Visual Canvas** | Rectangles, diamonds, sticky notes, curved connectors, duplicate, **Linked Note Cards** | ✅ **Shipped** | `src/features/canvas/` |
-| **Plugin System** | Sandboxed manifest, command registration, live status bar, 3 sample plugins | ✅ **Shipped** | `src/core/plugins/` |
-| **Theme Engine** | Dark mode & Light mode with CSS variables & Tailwind tokens | ✅ **Shipped** | `src/styles/index.css` |
-| **Command Palette** | Quick note navigation & plugin action runner (`Ctrl+K` / `Cmd+K`) | ✅ **Shipped** | `src/components/CommandPalette.tsx` |
-| **Storage & Backup** | LocalStorage / IndexedDB storage abstraction + JSON workspace backup | ✅ **Shipped** | `src/core/storage/` |
-| **Canvas Export** | SVG diagram export | ✅ **Shipped** | `src/features/canvas/` |
-| **KaTeX Math & Mermaid** | In-editor LaTeX math rendering and flowchart syntax | 🚧 **In Progress** | [Roadmap](./docs/roadmap.md) |
-| **Desktop Build (Tauri)** | Native local filesystem access via Rust / Tauri | 📋 **Planned** | [Roadmap](./docs/roadmap.md) |
+| **Markdown Notes** | Full GFM editor, live split preview, folder organization, tag filtering | Complete | `src/features/notes/` |
+| **Bidirectional Links** | `[[Note Title]]` & `[[Note|Alias]]` parsing, automatic backlinks panel | Complete | `src/core/markdown/` |
+| **Note Templates** | Daily Notes, Meeting Minutes, ADRs, Research Notes with 1-click insertion | Complete | `src/core/templates/` |
+| **Knowledge Graph** | Physics simulation, Color by Type/Folder/Tag, in-graph search, orphan toggles | Complete | `src/features/graph/` |
+| **Visual Canvas** | Rectangles, diamonds, sticky notes, curved connectors, duplicate, **Linked Note Cards** | Complete | `src/features/canvas/` |
+| **Plugin System** | Sandboxed manifest, command registration, live status bar, 3 sample plugins | Complete | `src/core/plugins/` |
+| **Theme Engine** | Dark mode & Light mode with CSS variables & Tailwind tokens | Complete | `src/styles/index.css` |
+| **Command Palette** | Quick note navigation & plugin action runner (`Ctrl+K` / `Cmd+K`) | Complete | `src/components/CommandPalette.tsx` |
+| **Storage & Backup** | LocalStorage / IndexedDB storage abstraction + JSON workspace backup | Complete | `src/core/storage/` |
+| **Canvas Export** | SVG diagram export | Complete | `src/features/canvas/` |
+| **KaTeX Math & Mermaid** | In-editor LaTeX math rendering and flowchart syntax | In Progress | [Roadmap](./docs/roadmap.md) |
+| **Desktop Build (Tauri)** | Native local filesystem access via Rust / Tauri | Planned | [Roadmap](./docs/roadmap.md) |
 
 ---
 
-## 🚀 Community Roadmap & Good First Issues
+## Community Roadmap & Good First Issues
 
 We welcome new contributors! As project administrators, we ensure beginner-friendly tasks are well-scoped with mentorship available:
 
-### 🌟 Good First Issues (Beginner Friendly)
+### Good First Issues (Beginner Friendly)
 | ID | Area | Task | Skills Needed |
 | :--- | :--- | :--- | :--- |
-| `#101` | **Plugins** | Build a "Reading Goal Tracker" plugin showing daily words written | TypeScript |
-| `#102` | **Canvas** | Add color picker presets for sticky notes (pastel green, purple, coral) | React, CSS |
-| `#103` | **Notes** | Add a "Copy Note as Markdown" button to the editor toolbar | React, Lucide |
-| `#104` | **Graph** | Add node search highlight filter in the Knowledge Graph | Canvas 2D, TS |
-| `#105` | **Themes** | Add a "Nord" or "Solarized" color theme preset | CSS Variables |
+| `#101` | **Themes** | Add Nord and Solarized color theme presets | CSS Variables |
+| `#102` | **Plugins** | Build a Pomodoro Timer plugin displaying status in footer | TypeScript |
+| `#103` | **Canvas** | Add pastel color presets for canvas sticky notes | React, CSS |
+| `#104` | **Notes** | Add target word goal tracker to editor toolbar | React, Lucide |
+| `#105` | **Graph** | Add connection depth filter (1-hop, 2-hop neighborhood) | Canvas 2D, TS |
 
-### 🛠️ Intermediate & Advanced Community Issues
+### Intermediate & Advanced Community Issues
 | ID | Area | Task | Skills Needed |
 | :--- | :--- | :--- | :--- |
 | `#201` | **Markdown** | Implement Mermaid diagram rendering in Markdown preview | Markdown, Mermaid.js |
@@ -72,7 +73,7 @@ We welcome new contributors! As project administrators, we ensure beginner-frien
 
 ---
 
-## ⚡ Quickstart
+## Quickstart
 
 ### Prerequisites
 - Node.js `v20+` or `v22+`
@@ -91,7 +92,7 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000` in your browser. NoteMesh comes pre-populated with interconnected sample notes and a canvas flowchart so you can explore immediately!
+Visit `http://localhost:3000` in your browser. NoteMesh comes pre-populated with interconnected sample notes and a canvas flowchart so you can explore immediately.
 
 ### Scripts
 ```bash
@@ -110,7 +111,7 @@ npm run build
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```
 notemesh/
@@ -121,21 +122,24 @@ notemesh/
 ├── docs/
 │   ├── architecture.md     # In-depth architectural subsystem breakdown
 │   ├── data-format.md      # Note, Canvas, and JSON schema specifications
-│   └── plugin-development.md# Tutorial on authoring community plugins
+│   ├── plugin-development.md# Tutorial on authoring community plugins
+│   └── roadmap.md          # 55% built core vs 45% community expansion plan
 ├── src/
-│   ├── components/         # Shared UI: Navbar, Sidebar, CommandPalette, Modals
+│   ├── components/         # Shared UI: Navbar, Sidebar, CommandPalette
 │   ├── core/
 │   │   ├── domain/         # Strict TypeScript domain interfaces
 │   │   ├── graph/          # Physics engine & graph data builder
 │   │   ├── markdown/       # Wikilinks, tags, and GFM compiler
 │   │   ├── plugins/        # Plugin manager & sample extensions
-│   │   └── storage/        # Storage abstraction & LocalStorage adapter
+│   │   ├── storage/        # Storage abstraction & LocalStorage adapter
+│   │   └── templates/      # Reusable built-in note templates
 │   ├── features/
 │   │   ├── canvas/         # Freeform visual whiteboard & diagram editor
 │   │   ├── graph/          # Knowledge Graph canvas & interactive controls
 │   │   ├── notes/          # Note editor, live preview, and backlinks panel
-│   │   ├── plugins/        # Extension manager UI
-│   │   └── settings/       # Workspace settings & JSON backup
+│   │   ├── plugins/        # Extension manager modal
+│   │   ├── settings/       # Dedicated Settings view & workspace metrics
+│   │   └── templates/      # Dedicated Templates view & generator
 │   ├── styles/             # Tailwind & theme tokens
 │   ├── test/               # Vitest automated test suites
 │   ├── App.tsx             # Main workspace application shell
@@ -149,7 +153,7 @@ notemesh/
 
 ---
 
-## 🔒 Ethics & Data Sovereignty
+## Ethics & Data Sovereignty
 
 NoteMesh strictly abides by our [Ethics Charter](./ETHICS.md):
 - **Local-first**: You own your data. Notes are never transmitted to third-party clouds or telemetry trackers.
@@ -158,7 +162,7 @@ NoteMesh strictly abides by our [Ethics Charter](./ETHICS.md):
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We love contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guide before submitting a PR.
 - Use Conventional Commits (`feat:`, `fix:`, `docs:`)
@@ -167,6 +171,6 @@ We love contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) guid
 
 ---
 
-## 📜 License
+## License
 
 Licensed under the [MIT License](./LICENSE). Copyright (c) 2026 NoteMesh Community.

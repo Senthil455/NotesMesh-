@@ -20,8 +20,8 @@ describe('Built-in Note Templates', () => {
     });
 
     expect(output).toContain('Daily Note - 2026-10-17');
-    expect(output).toContain('Primary Goals for Today');
-    expect(output).toContain('Evening Reflection');
+    expect(output).toContain('Primary Objectives');
+    expect(output).toContain('Review & Summary');
   });
 
   it('generates an Architecture Decision Record with context and outcome', () => {

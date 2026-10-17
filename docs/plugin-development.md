@@ -1,6 +1,6 @@
-# Plugin Development Guide 🔌
+# Plugin Development Guide
 
-Welcome to the NoteMesh Plugin Developer Guide! NoteMesh is designed to be extensible from day one without turning the core codebase into a monolith.
+Welcome to the NoteMesh Plugin Developer Guide. NoteMesh is designed to be extensible from day one without turning the core codebase into a monolith.
 
 ---
 
@@ -35,10 +35,10 @@ export const MyCustomPlugin: PluginInstance = {
     // 1. Add Status Bar Item
     context.addStatusBarItem({
       id: 'pomodoro-timer',
-      text: '🍅 25:00',
-      tooltip: 'Click to start Pomodoro timer',
+      text: 'Focus: 25:00',
+      tooltip: 'Click to start timer',
       onClick: () => {
-        alert('Pomodoro started!');
+        alert('Timer started.');
       },
     });
 
@@ -47,7 +47,7 @@ export const MyCustomPlugin: PluginInstance = {
       id: 'reset-pomodoro',
       title: 'Pomodoro: Reset Timer',
       handler: () => {
-        context.updateStatusBarItem('pomodoro-timer', '🍅 25:00');
+        context.updateStatusBarItem('pomodoro-timer', 'Focus: 25:00');
       },
     });
   },
