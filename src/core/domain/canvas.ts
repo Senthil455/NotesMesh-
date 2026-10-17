@@ -6,10 +6,18 @@ export type CanvasElementType =
   | 'rectangle' 
   | 'diamond' 
   | 'circle' 
+  | 'cylinder'
+  | 'cloud'
+  | 'hexagon'
+  | 'parallelogram'
+  | 'actor'
   | 'sticky' 
   | 'text' 
   | 'note-card' 
   | 'connector';
+
+export type ConnectorStyle = 'curved' | 'orthogonal' | 'straight' | 'dashed';
+export type ArrowHeadType = 'end' | 'both' | 'none';
 
 export interface CanvasElement {
   id: string;
@@ -19,7 +27,7 @@ export interface CanvasElement {
   width: number;
   height: number;
   text?: string;
-  color?: string; // background or stroke
+  color?: string; // background or fill
   strokeColor?: string;
   // Specific to note-card
   linkedNoteId?: string;
@@ -29,6 +37,8 @@ export interface CanvasElement {
   toId?: string;
   fromPoint?: { x: number; y: number };
   toPoint?: { x: number; y: number };
+  connectorStyle?: ConnectorStyle;
+  arrowHeadType?: ArrowHeadType;
 }
 
 export interface CanvasDocument {

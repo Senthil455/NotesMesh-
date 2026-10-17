@@ -6,7 +6,6 @@ import { storage } from './core/storage/localStorageAdapter';
 import { buildBacklinks, extractTags } from './core/markdown/wikilinks';
 import { pluginManager, StatusBarItem } from './core/plugins/pluginManager';
 import { WordCountPlugin, MarkdownExportPlugin, TableOfContentsPlugin } from './core/plugins/samplePlugins';
-import { BUILT_IN_TEMPLATES } from './core/templates/builtInTemplates';
 
 import { Navbar, ActiveTab } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -100,7 +99,7 @@ export const App: React.FC = () => {
     const newNote: Note = {
       id: `note-${Date.now()}`,
       title: title || 'Untitled Note',
-      content: `# ${title || 'Untitled Note'}\n\nStart typing your ideas here... Connect other notes with [[Wikilinks]]!`,
+      content: '', // Completely clean textbox
       tags: [],
       folder: folder || 'General',
       isPinned: false,
@@ -144,15 +143,10 @@ export const App: React.FC = () => {
       setActiveNoteId(existing.id);
       setActiveTab('notes');
     } else {
-      const tpl = BUILT_IN_TEMPLATES.find(t => t.id === 'tpl-daily');
-      const content = tpl
-        ? tpl.templateContent({ title: dailyTitle, dateStr })
-        : `# ${dailyTitle}\n\nDaily log for ${dateStr}`;
-
       const dailyNote: Note = {
         id: `note-daily-${dateStr}`,
         title: dailyTitle,
-        content,
+        content: '', // Completely clean textbox for daily note
         tags: ['daily-log', 'journal'],
         folder: 'Daily Notes',
         isPinned: true,
@@ -329,25 +323,25 @@ export const App: React.FC = () => {
       </div>
 
       {/* Bottom Status Bar for Extensions */}
-      <footer className="h-6 border-t border-border bg-surface px-4 flex items-center justify-between text-[11px] text-gray-400 select-none z-20 shrink-0">
-        <div className="flex items-center space-x-4">
-          <span className="flex items-center space-x-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>NoteMesh Core · Local-first</span>
+      <footer className="h-7 border-t border-border dark:border-slate-800 bg-surface dark:bg-[#111827]/90 px-5 flex items-center justify-between text-xs font-semibold text-slate-400 select-none z-20 shrink-0">
+        <div className="flex items-center space-x-5">
+          <span className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-slate-300">NoteMesh Core · Local-first</span>
           </span>
           {statusBarItems.map(item => (
             <span
               key={item.id}
               onClick={item.onClick}
               title={item.tooltip}
-              className={`hover:text-primary transition-colors ${item.onClick ? 'cursor-pointer' : ''}`}
+              className={`hover:text-indigo-400 transition-colors ${item.onClick ? 'cursor-pointer' : ''}`}
             >
               {item.text}
             </span>
           ))}
         </div>
 
-        <div className="flex items-center space-x-3 text-[10px]">
+        <div className="flex items-center space-x-3 text-xs font-semibold text-slate-400">
           <span>Markdown GFM</span>
           <span>•</span>
           <span>Open Source</span>

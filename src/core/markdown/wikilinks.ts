@@ -15,6 +15,7 @@ const TAG_REGEX = /(?:^|\s)#([a-zA-Z0-9_\-/]+)/g;
  */
 export function extractWikilinks(content: string, sourceNoteId: string): NoteLink[] {
   const links: NoteLink[] = [];
+  if (!content) return links;
   let match: RegExpExecArray | null;
 
   // Reset regex state
@@ -41,6 +42,7 @@ export function extractWikilinks(content: string, sourceNoteId: string): NoteLin
  */
 export function extractTags(content: string): string[] {
   const tags = new Set<string>();
+  if (!content) return [];
   let match: RegExpExecArray | null;
 
   TAG_REGEX.lastIndex = 0;
@@ -86,10 +88,9 @@ export function buildBacklinks(targetNote: Note, allNotes: Note[]): BacklinkItem
     const links = extractWikilinks(note.content, note.id);
     const mentionsTarget = links.some(
       l => l.targetTitle.toLowerCase().trim() === targetTitleLower
-    );
+    ) || (note.linkedNoteIds && note.linkedNoteIds.includes(targetNote.id));
 
     if (mentionsTarget) {
-      // Create a contextual preview snippet around the mention
       const snippet = extractSnippet(note.content, targetNote.title);
       backlinks.push({
         sourceNoteId: note.id,
@@ -103,6 +104,7 @@ export function buildBacklinks(targetNote: Note, allNotes: Note[]): BacklinkItem
 }
 
 function extractSnippet(content: string, query: string): string {
+  if (!content) return '';
   const index = content.toLowerCase().indexOf(query.toLowerCase());
   if (index === -1) return content.slice(0, 100);
 

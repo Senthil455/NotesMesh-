@@ -10,6 +10,7 @@ export interface Note {
   tags: string[];
   isPinned?: boolean;
   isFavorite?: boolean;
+  linkedNoteIds?: string[];
   createdAt: number;
   updatedAt: number;
 }

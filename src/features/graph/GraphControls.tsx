@@ -16,44 +16,44 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
   availableTags,
 }) => {
   return (
-    <div className="absolute top-4 right-4 z-10 w-64 bg-surface/95 backdrop-blur-md border border-border rounded-xl p-3 shadow-lg select-none text-xs space-y-3">
+    <div className="absolute top-4 right-4 z-10 w-72 bg-surface/95 dark:bg-slate-900/95 backdrop-blur-md border border-border dark:border-slate-800 rounded-2xl p-4 shadow-2xl select-none text-xs space-y-3.5">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-border">
-        <div className="flex items-center space-x-1.5 font-semibold text-gray-800 dark:text-gray-200">
-          <Sliders className="w-3.5 h-3.5 text-primary" />
+      <div className="flex items-center justify-between pb-2.5 border-b border-border dark:border-slate-800">
+        <div className="flex items-center space-x-2 font-bold text-sm text-slate-800 dark:text-slate-100">
+          <Sliders className="w-4 h-4 text-indigo-400" />
           <span>Graph Settings</span>
         </div>
         <button
           onClick={onResetSimulation}
           title="Reheat Simulation"
-          className="p-1 hover:bg-surface-hover rounded text-gray-400 hover:text-primary transition-colors"
+          className="p-1.5 hover:bg-surface-hover dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors"
         >
-          <RefreshCw className="w-3.5 h-3.5" />
+          <RefreshCw className="w-4 h-4" />
         </button>
       </div>
 
       {/* Real-time search inside graph */}
       <div className="relative">
-        <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
         <input
           type="text"
           placeholder="Search in graph..."
           value={config.searchFilter}
           onChange={e => onChangeConfig({ ...config, searchFilter: e.target.value })}
-          className="w-full pl-7 pr-2 py-1 text-xs rounded bg-surface-hover border border-border focus:outline-none focus:border-primary text-gray-700 dark:text-gray-300"
+          className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-xl bg-surface-hover/70 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200"
         />
       </div>
 
-      {/* Color Mode Selector (from reference image) */}
+      {/* Color Mode Selector */}
       <div>
-        <div className="flex items-center space-x-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-          <Palette className="w-3 h-3 text-purple-400" />
+        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+          <Palette className="w-3.5 h-3.5 text-indigo-400" />
           <span>Color Scheme</span>
         </div>
         <select
           value={config.colorMode}
           onChange={e => onChangeConfig({ ...config, colorMode: e.target.value as 'type' | 'folder' | 'tag' })}
-          className="w-full text-xs bg-surface-hover border border-border rounded p-1 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-primary font-medium"
+          className="w-full text-xs font-semibold bg-surface-hover/70 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 rounded-xl p-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
         >
           <option value="type">Color by Node Type</option>
           <option value="folder">Color by Folder</option>
@@ -62,41 +62,41 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
       </div>
 
       {/* Filters */}
-      <div className="space-y-2 pt-1 border-t border-border">
-        <div className="flex items-center space-x-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-          <Filter className="w-3 h-3" />
+      <div className="space-y-2.5 pt-2 border-t border-border dark:border-slate-800">
+        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <Filter className="w-3.5 h-3.5 text-cyan-400" />
           <span>Visibility</span>
         </div>
 
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="text-gray-700 dark:text-gray-300">Show Orphans</span>
+        <label className="flex items-center justify-between cursor-pointer py-0.5">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Show Orphans</span>
           <input
             type="checkbox"
             checked={config.showOrphans}
             onChange={e => onChangeConfig({ ...config, showOrphans: e.target.checked })}
-            className="rounded border-border text-primary focus:ring-primary"
+            className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
           />
         </label>
 
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="text-gray-700 dark:text-gray-300">Show Missing [[Links]]</span>
+        <label className="flex items-center justify-between cursor-pointer py-0.5">
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Show Missing Links</span>
           <input
             type="checkbox"
             checked={config.showMissingLinks}
             onChange={e => onChangeConfig({ ...config, showMissingLinks: e.target.checked })}
-            className="rounded border-border text-primary focus:ring-primary"
+            className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
           />
         </label>
 
         {availableTags.length > 0 && (
           <div className="pt-1">
-            <label className="block text-gray-500 text-[10px] uppercase font-semibold mb-1">
+            <label className="block text-slate-400 text-xs uppercase font-bold mb-1.5">
               Filter by Tag
             </label>
             <select
               value={config.tagFilter || ''}
               onChange={e => onChangeConfig({ ...config, tagFilter: e.target.value || null })}
-              className="w-full text-xs bg-surface-hover border border-border rounded p-1 text-gray-700 dark:text-gray-300 focus:outline-none focus:border-primary"
+              className="w-full text-xs font-semibold bg-surface-hover/70 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 rounded-xl p-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               <option value="">All Tags</option>
               {availableTags.map(tag => (
@@ -108,16 +108,16 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
       </div>
 
       {/* Physical Forces Sliders */}
-      <div className="space-y-2 pt-2 border-t border-border">
-        <div className="flex items-center space-x-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-          <Sparkles className="w-3 h-3 text-cyan-500" />
+      <div className="space-y-2.5 pt-2 border-t border-border dark:border-slate-800">
+        <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
           <span>Forces</span>
         </div>
 
         <div>
-          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+          <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
             <span>Repel Force</span>
-            <span>{config.repelForce}</span>
+            <span className="font-mono text-slate-300">{config.repelForce}</span>
           </div>
           <input
             type="range"
@@ -126,14 +126,14 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
             step="50"
             value={config.repelForce}
             onChange={e => onChangeConfig({ ...config, repelForce: Number(e.target.value) })}
-            className="w-full accent-primary h-1 bg-surface-hover rounded"
+            className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
           />
         </div>
 
         <div>
-          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+          <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
             <span>Link Distance</span>
-            <span>{config.linkDistance}px</span>
+            <span className="font-mono text-slate-300">{config.linkDistance}px</span>
           </div>
           <input
             type="range"
@@ -142,14 +142,14 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
             step="10"
             value={config.linkDistance}
             onChange={e => onChangeConfig({ ...config, linkDistance: Number(e.target.value) })}
-            className="w-full accent-primary h-1 bg-surface-hover rounded"
+            className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
           />
         </div>
 
         <div>
-          <div className="flex justify-between text-[11px] text-gray-500 mb-0.5">
+          <div className="flex justify-between text-xs font-semibold text-slate-400 mb-1">
             <span>Collision Radius</span>
-            <span>{config.collisionRadius}px</span>
+            <span className="font-mono text-slate-300">{config.collisionRadius}px</span>
           </div>
           <input
             type="range"
@@ -158,7 +158,7 @@ export const GraphControls: React.FC<GraphControlsProps> = ({
             step="5"
             value={config.collisionRadius}
             onChange={e => onChangeConfig({ ...config, collisionRadius: Number(e.target.value) })}
-            className="w-full accent-primary h-1 bg-surface-hover rounded"
+            className="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
           />
         </div>
       </div>

@@ -50,7 +50,7 @@ export function createMarkedInstance(existingTitles: Set<string>) {
           const escapedTarget = escapeHtml(target);
           const escapedAlias = escapeHtml(alias);
 
-          return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer border wikilink-pill ${statusClass}" data-wikilink="${escapedTarget}">[[${escapedAlias}]]</span>`;
+          return `<span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold cursor-pointer border wikilink-pill ${statusClass}" data-wikilink="${escapedTarget}">[[${escapedAlias}]]</span>`;
         },
       },
     ],
@@ -60,8 +60,11 @@ export function createMarkedInstance(existingTitles: Set<string>) {
 }
 
 export function renderMarkdown(markdown: string, existingTitles: Set<string>): string {
+  if (!markdown) return '';
+  // Normalize headings typed without spaces like "##hello" -> "## hello"
+  const normalized = markdown.replace(/^(#{1,6})([^\s#])/gm, '$1 $2');
   const instance = createMarkedInstance(existingTitles);
-  return instance.parse(markdown) as string;
+  return instance.parse(normalized) as string;
 }
 
 function escapeHtml(str: string): string {

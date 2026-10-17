@@ -54,8 +54,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         e.preventDefault();
         if (isOpen) {
           onClose();
-        } else {
-          // Trigger handled in parent
         }
       }
       if (e.key === 'Escape' && isOpen) {
@@ -78,36 +76,36 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-20 p-4">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-start justify-center pt-20 p-4">
       <div 
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-xl bg-surface border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+        className="w-full max-w-xl bg-surface dark:bg-[#111827] border border-border dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100"
       >
         {/* Search input */}
-        <div className="flex items-center px-4 py-3 border-b border-border space-x-3">
-          <Search className="w-5 h-5 text-gray-400" />
+        <div className="flex items-center px-4 py-3.5 border-b border-border dark:border-slate-800 space-x-3">
+          <Search className="w-5 h-5 text-indigo-400" />
           <input
             ref={inputRef}
             type="text"
             placeholder="Search notes or run commands..."
             value={query}
             onChange={e => setQuery(e.target.value)}
-            className="w-full bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none"
+            className="w-full bg-transparent text-sm sm:text-base font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
           />
-          <kbd className="text-[10px] bg-surface-hover border border-border px-1.5 py-0.5 rounded text-gray-400">
+          <kbd className="text-xs font-mono font-bold bg-surface-hover dark:bg-slate-800 border border-border dark:border-slate-700 px-2 py-0.5 rounded text-slate-300">
             ESC
           </kbd>
         </div>
 
         {/* Results List */}
-        <div className="max-h-80 overflow-y-auto p-2 space-y-3">
+        <div className="max-h-80 overflow-y-auto p-3 space-y-3">
           {/* Notes Group */}
           {filteredNotes.length > 0 && (
             <div>
-              <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="px-2 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Notes
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1 mt-1">
                 {filteredNotes.map(n => (
                   <div
                     key={n.id}
@@ -115,13 +113,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       onOpenNote(n.id);
                       onClose();
                     }}
-                    className="flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs group"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm group transition-colors"
                   >
-                    <div className="flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{n.title}</span>
+                    <div className="flex items-center space-x-2.5">
+                      <FileText className="w-4 h-4 text-indigo-400" />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{n.title}</span>
                     </div>
-                    <span className="text-[10px] text-gray-400">Jump to note</span>
+                    <span className="text-xs font-medium text-slate-400">Jump to note</span>
                   </div>
                 ))}
               </div>
@@ -131,10 +129,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Plugin Commands */}
           {filteredCommands.length > 0 && (
             <div>
-              <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="px-2 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Plugin Commands
               </div>
-              <div className="space-y-0.5">
+              <div className="space-y-1 mt-1">
                 {filteredCommands.map(cmd => (
                   <div
                     key={cmd.id}
@@ -142,14 +140,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       cmd.handler();
                       onClose();
                     }}
-                    className="flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Terminal className="w-4 h-4 text-cyan-500" />
-                      <span className="font-medium text-gray-800 dark:text-gray-200">{cmd.title}</span>
+                    <div className="flex items-center space-x-2.5">
+                      <Terminal className="w-4 h-4 text-cyan-400" />
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{cmd.title}</span>
                     </div>
                     {cmd.shortcut && (
-                      <kbd className="text-[10px] font-mono bg-surface-hover border border-border px-1.5 py-0.5 rounded text-gray-400">
+                      <kbd className="text-xs font-mono font-bold bg-surface-hover dark:bg-slate-800 border border-border dark:border-slate-700 px-2 py-0.5 rounded text-slate-300">
                         {cmd.shortcut}
                       </kbd>
                     )}
@@ -161,19 +159,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
           {/* Core System Actions */}
           <div>
-            <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <div className="px-2 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
               Navigation & Actions
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-1 mt-1">
               <div
                 onClick={() => {
                   onNewNote();
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                <Plus className="w-4 h-4 text-emerald-500" />
-                <span className="font-medium">Create New Note</span>
+                <Plus className="w-4 h-4 text-emerald-400" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Create New Note</span>
               </div>
 
               <div
@@ -181,10 +179,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectTab('graph');
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                <Share2 className="w-4 h-4 text-blue-500" />
-                <span className="font-medium">Open Knowledge Graph</span>
+                <Share2 className="w-4 h-4 text-indigo-400" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Open Knowledge Graph</span>
               </div>
 
               <div
@@ -192,10 +190,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectTab('canvas');
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                <Layout className="w-4 h-4 text-purple-500" />
-                <span className="font-medium">Open Visual Canvas</span>
+                <Layout className="w-4 h-4 text-purple-400" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Open Visual Canvas</span>
               </div>
 
               <div
@@ -203,10 +201,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectTab('templates');
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-                <span className="font-medium">Open Note Templates</span>
+                <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Open Note Templates</span>
               </div>
 
               <div
@@ -214,10 +212,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onSelectTab('settings');
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                <Settings className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">Open Workspace Settings</span>
+                <Settings className="w-4 h-4 text-slate-400" />
+                <span className="font-semibold text-slate-800 dark:text-slate-200">Open Workspace Settings</span>
               </div>
 
               <div
@@ -225,10 +223,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   onToggleTheme();
                   onClose();
                 }}
-                className="flex items-center space-x-2 px-2.5 py-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                className="flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-surface-hover dark:hover:bg-slate-800 cursor-pointer text-xs sm:text-sm transition-colors"
               >
-                {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-                <span className="font-medium">
+                {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
                   {isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
                 </span>
               </div>

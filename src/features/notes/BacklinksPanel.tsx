@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BacklinkItem } from '../../core/domain/note';
-import { Link2, ArrowUpRight } from 'lucide-react';
+import { GitFork, ArrowUpRight, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 interface BacklinksPanelProps {
   backlinks: BacklinkItem[];
@@ -11,37 +11,63 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
   backlinks,
   onOpenNote,
 }) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  if (backlinks.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="border-t border-border bg-surface-hover/30 p-4">
-      <div className="flex items-center space-x-2 mb-3">
-        <Link2 className="w-4 h-4 text-primary" />
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-          Linked Mentions / Backlinks ({backlinks.length})
-        </h4>
+    <div className="border-t border-border dark:border-slate-800/80 bg-surface dark:bg-[#090d18] px-6 py-3 shrink-0 select-none font-sans">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between cursor-pointer group py-1"
+      >
+        <div className="flex items-center space-x-2">
+          <div className="w-5 h-5 rounded-md bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+            <GitFork className="w-3.5 h-3.5" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 group-hover:text-white transition-colors">
+            Bidirectional Connections ({backlinks.length})
+          </span>
+        </div>
+        <button className="text-slate-400 group-hover:text-slate-200 p-1 transition-colors">
+          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
       </div>
 
-      {backlinks.length === 0 ? (
-        <p className="text-xs text-gray-400 italic">
-          No other notes link to this note yet. Use <code className="text-primary font-mono text-[11px]">[[This Note Title]]</code> in another note to create a connection.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {isOpen && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2.5 pb-2">
           {backlinks.map(item => (
             <div
               key={item.sourceNoteId}
               onClick={() => onOpenNote(item.sourceNoteId)}
-              className="group p-2.5 rounded-lg border border-border bg-surface hover:border-primary/50 cursor-pointer transition-all shadow-sm"
+              className="group relative p-3 rounded-xl border border-border dark:border-slate-800 bg-surface dark:bg-[#0f1524] hover:border-indigo-500/60 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-950/20 cursor-pointer transition-all duration-200"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors flex items-center gap-1">
-                  <span>{item.sourceNoteTitle}</span>
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </span>
-                <span className="text-[10px] text-gray-400">Jump to note</span>
+              {/* Left accent indicator */}
+              <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r bg-indigo-500/40 group-hover:bg-indigo-500 transition-colors" />
+
+              <div className="pl-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span className="text-xs font-bold text-slate-200 group-hover:text-white truncate">
+                      {item.sourceNoteTitle}
+                    </span>
+                  </div>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-1.5" />
+                </div>
+
+                {item.previewSnippet ? (
+                  <p className="text-xs text-slate-400 mt-1.5 line-clamp-2 font-body font-normal italic bg-slate-900/60 px-2 py-1 rounded-md border border-slate-800/80">
+                    "{item.previewSnippet}"
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-1 font-sans">
+                    Connected via bidirectional link
+                  </p>
+                )}
               </div>
-              <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 italic font-mono bg-surface-hover/50 p-1 rounded">
-                "{item.previewSnippet}"
-              </p>
             </div>
           ))}
         </div>

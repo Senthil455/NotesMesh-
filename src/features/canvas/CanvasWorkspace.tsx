@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Note } from '../../core/domain/note';
-import { CanvasDocument, CanvasElement, CanvasElementType } from '../../core/domain/canvas';
+import { CanvasDocument, CanvasElement, CanvasElementType, ConnectorStyle, ArrowHeadType } from '../../core/domain/canvas';
 import { CanvasToolbar } from './CanvasToolbar';
 import { 
   FileText, 
@@ -9,7 +9,11 @@ import {
   ZoomIn, 
   ZoomOut, 
   Maximize2,
-  Copy 
+  Copy,
+  Workflow,
+  Spline,
+  GitCommit,
+  ArrowRight
 } from 'lucide-react';
 
 interface CanvasWorkspaceProps {
@@ -20,6 +24,45 @@ interface CanvasWorkspaceProps {
   isDarkMode: boolean;
 }
 
+// Computes optimal attachment points between two shapes
+function getAutoConnectPoints(
+  fromEl: CanvasElement, 
+  toEl: CanvasElement
+): { fromPoint: { x: number; y: number }; toPoint: { x: number; y: number } } {
+  const centerA = { x: fromEl.x + fromEl.width / 2, y: fromEl.y + fromEl.height / 2 };
+  const centerB = { x: toEl.x + toEl.width / 2, y: toEl.y + toEl.height / 2 };
+
+  const dx = centerB.x - centerA.x;
+  const dy = centerB.y - centerA.y;
+
+  let fromPoint = { x: centerA.x, y: centerA.y };
+  let toPoint = { x: centerB.x, y: centerB.y };
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (dx > 0) {
+      // B is to the right of A
+      fromPoint = { x: fromEl.x + fromEl.width, y: centerA.y };
+      toPoint = { x: toEl.x, y: centerB.y };
+    } else {
+      // B is to the left of A
+      fromPoint = { x: fromEl.x, y: centerA.y };
+      toPoint = { x: toEl.x + toEl.width, y: centerB.y };
+    }
+  } else {
+    if (dy > 0) {
+      // B is below A
+      fromPoint = { x: centerA.x, y: fromEl.y + fromEl.height };
+      toPoint = { x: centerB.x, y: toEl.y };
+    } else {
+      // B is above A
+      fromPoint = { x: centerA.x, y: fromEl.y };
+      toPoint = { x: centerB.x, y: toEl.y + toEl.height };
+    }
+  }
+
+  return { fromPoint, toPoint };
+}
+
 export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   canvasDoc,
   onUpdateCanvas,
@@ -28,6 +71,13 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   isDarkMode,
 }) => {
   const [activeTool, setActiveTool] = useState<CanvasElementType | 'select'>('select');
+  const [connectorStyle, setConnectorStyle] = useState<ConnectorStyle>('curved');
+  const [arrowHeadType, setArrowHeadType] = useState<ArrowHeadType>('end');
+  
+  // Auto-connect flow state
+  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
+  const [connectSourceId, setConnectSourceId] = useState<string | null>(null);
+
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
   const [isNoteSelectorOpen, setIsNoteSelectorOpen] = useState(false);
@@ -42,9 +92,14 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   // Dragging state
   const isDraggingCanvasRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
-  const draggedElementRef = useRef<{ id: string; initialX: number; initialY: number; mouseStartX: number; mouseStartY: number } | null>(null);
+  const draggedElementRef = useRef<{ 
+    id: string; 
+    initialX: number; 
+    initialY: number; 
+    mouseStartX: number; 
+    mouseStartY: number 
+  } | null>(null);
 
-  // Sync state to history
   const pushHistory = (newElements: CanvasElement[]) => {
     const nextHistory = history.slice(0, historyIndex + 1);
     nextHistory.push(newElements);
@@ -69,29 +124,41 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     }
   };
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    // If clicking on empty canvas
-    if ((e.target as HTMLElement).tagName === 'svg' || (e.target as HTMLElement).id === 'canvas-bg') {
-      setSelectedElementId(null);
-      setEditingElementId(null);
+  const screenToCanvas = (clientX: number, clientY: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: Math.round((clientX - rect.left - pan.x) / pan.zoom),
+      y: Math.round((clientY - rect.top - pan.y) / pan.zoom),
+    };
+  };
 
-      if (activeTool === 'select') {
+  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+    // If clicking background
+    if ((e.target as HTMLElement).id === 'canvas-bg' || (e.target as HTMLElement).tagName === 'svg') {
+      if (activeTool !== 'select' && activeTool !== 'connector') {
+        const { x, y } = screenToCanvas(e.clientX, e.clientY);
+        createElementAt(activeTool, x, y);
+        setActiveTool('select');
+      } else {
+        setSelectedElementId(null);
+        setEditingElementId(null);
+        if (isAutoConnecting) {
+          setIsAutoConnecting(false);
+          setConnectSourceId(null);
+        }
         isDraggingCanvasRef.current = true;
         dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-      } else {
-        // Place new element at clicked point
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        const worldX = (e.clientX - rect.left - pan.x) / pan.zoom;
-        const worldY = (e.clientY - rect.top - pan.y) / pan.zoom;
-
-        createElementAt(activeTool, worldX, worldY);
-        setActiveTool('select');
       }
     }
   };
 
-  const createElementAt = (type: CanvasElementType, x: number, y: number, linkedNote?: Note) => {
+  const createElementAt = (
+    type: CanvasElementType, 
+    x: number, 
+    y: number, 
+    linkedNote?: Note
+  ) => {
     const id = `el-${Date.now()}`;
     let newElement: CanvasElement;
 
@@ -106,7 +173,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           height: 80,
           text: 'Process Step',
           color: isDarkMode ? '#1e293b' : '#ffffff',
-          strokeColor: '#3b82f6',
+          strokeColor: '#6366f1',
         };
         break;
       case 'diamond':
@@ -117,7 +184,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           y,
           width: 120,
           height: 100,
-          text: 'Condition?',
+          text: 'Decision?',
           color: '#8b5cf6',
         };
         break;
@@ -129,8 +196,47 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           y,
           width: 100,
           height: 100,
-          text: 'Concept',
+          text: 'State',
           color: '#06b6d4',
+        };
+        break;
+      case 'cylinder':
+        newElement = {
+          id,
+          type: 'cylinder',
+          x,
+          y,
+          width: 130,
+          height: 100,
+          text: 'Database',
+          color: isDarkMode ? '#1e293b' : '#f8fafc',
+          strokeColor: '#3b82f6',
+        };
+        break;
+      case 'cloud':
+        newElement = {
+          id,
+          type: 'cloud',
+          x,
+          y,
+          width: 160,
+          height: 100,
+          text: 'Cloud API',
+          color: isDarkMode ? '#1e293b' : '#f8fafc',
+          strokeColor: '#06b6d4',
+        };
+        break;
+      case 'hexagon':
+        newElement = {
+          id,
+          type: 'hexagon',
+          x,
+          y,
+          width: 140,
+          height: 90,
+          text: 'Service',
+          color: isDarkMode ? '#1e293b' : '#f8fafc',
+          strokeColor: '#10b981',
         };
         break;
       case 'sticky':
@@ -141,8 +247,8 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           y,
           width: 160,
           height: 140,
-          text: 'Note idea...',
-          color: '#fef08a', // classic yellow sticky
+          text: 'Quick Note...',
+          color: '#fef08a',
         };
         break;
       case 'text':
@@ -167,8 +273,8 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           height: 110,
           linkedNoteId: linkedNote?.id,
           linkedNoteTitle: linkedNote?.title || 'Linked Note',
-          text: linkedNote?.content.slice(0, 80).replace(/#/g, '') || 'Linked Note Card',
-          color: '#3b82f6',
+          text: linkedNote?.title || 'Linked Note Card',
+          color: '#6366f1',
         };
         break;
       case 'connector':
@@ -180,9 +286,13 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           width: 100,
           height: 0,
           fromPoint: { x, y },
-          toPoint: { x: x + 100, y: y + 50 },
+          toPoint: { x: x + 120, y: y + 60 },
+          connectorStyle,
+          arrowHeadType,
         };
         break;
+      default:
+        return;
     }
 
     pushHistory([...canvasDoc.elements, newElement]);
@@ -191,6 +301,42 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
   const handleElementMouseDown = (e: React.MouseEvent, el: CanvasElement) => {
     e.stopPropagation();
+
+    // Auto-Connect flow:
+    if (isAutoConnecting || activeTool === 'connector') {
+      if (!connectSourceId) {
+        // Step 1: select source shape
+        setConnectSourceId(el.id);
+        setSelectedElementId(el.id);
+      } else if (connectSourceId !== el.id) {
+        // Step 2: select target shape and connect them!
+        const sourceEl = canvasDoc.elements.find(item => item.id === connectSourceId);
+        if (sourceEl) {
+          const { fromPoint, toPoint } = getAutoConnectPoints(sourceEl, el);
+          const newConnector: CanvasElement = {
+            id: `connector-${Date.now()}`,
+            type: 'connector',
+            x: Math.min(fromPoint.x, toPoint.x),
+            y: Math.min(fromPoint.y, toPoint.y),
+            width: Math.abs(toPoint.x - fromPoint.x),
+            height: Math.abs(toPoint.y - fromPoint.y),
+            fromId: sourceEl.id,
+            toId: el.id,
+            fromPoint,
+            toPoint,
+            connectorStyle,
+            arrowHeadType,
+            color: '#6366f1',
+          };
+          pushHistory([...canvasDoc.elements, newConnector]);
+        }
+        setIsAutoConnecting(false);
+        setConnectSourceId(null);
+        setActiveTool('select');
+      }
+      return;
+    }
+
     setSelectedElementId(el.id);
 
     draggedElementRef.current = {
@@ -213,6 +359,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       const deltaX = (e.clientX - draggedElementRef.current.mouseStartX) / pan.zoom;
       const deltaY = (e.clientY - draggedElementRef.current.mouseStartY) / pan.zoom;
 
+      // 1. Move the dragged shape
       const nextElements = canvasDoc.elements.map(el => {
         if (el.id === draggedElementRef.current?.id) {
           return {
@@ -224,7 +371,25 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
         return el;
       });
 
-      onUpdateCanvas({ ...canvasDoc, elements: nextElements });
+      // 2. Real-time Auto-Connect: dynamically update attached connectors!
+      const elMap = new Map(nextElements.map(item => [item.id, item]));
+      const updatedElements = nextElements.map(el => {
+        if (el.type === 'connector' && el.fromId && el.toId) {
+          const source = elMap.get(el.fromId);
+          const target = elMap.get(el.toId);
+          if (source && target) {
+            const { fromPoint, toPoint } = getAutoConnectPoints(source, target);
+            return {
+              ...el,
+              fromPoint,
+              toPoint,
+            };
+          }
+        }
+        return el;
+      });
+
+      onUpdateCanvas({ ...canvasDoc, elements: updatedElements });
     }
   };
 
@@ -242,44 +407,51 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
   const handleDeleteSelected = () => {
     if (!selectedElementId) return;
-    const nextElements = canvasDoc.elements.filter(el => el.id !== selectedElementId);
+    const nextElements = canvasDoc.elements.filter(el => {
+      // If deleting a shape, also delete connectors attached to it
+      if (el.id === selectedElementId) return false;
+      if (el.type === 'connector' && (el.fromId === selectedElementId || el.toId === selectedElementId)) {
+        return false;
+      }
+      return true;
+    });
     pushHistory(nextElements);
     setSelectedElementId(null);
   };
 
   const handleDuplicateSelected = () => {
-    if (!selectedElementId) return;
     const target = canvasDoc.elements.find(el => el.id === selectedElementId);
     if (!target) return;
-    const duplicate: CanvasElement = {
+    const clone: CanvasElement = {
       ...target,
       id: `el-${Date.now()}`,
-      x: target.x + 25,
-      y: target.y + 25,
+      x: target.x + 30,
+      y: target.y + 30,
     };
-    pushHistory([...canvasDoc.elements, duplicate]);
-    setSelectedElementId(duplicate.id);
-  };
-
-  const handleUpdateElementText = (id: string, text: string) => {
-    const nextElements = canvasDoc.elements.map(el =>
-      el.id === id ? { ...el, text } : el
-    );
-    pushHistory(nextElements);
+    pushHistory([...canvasDoc.elements, clone]);
+    setSelectedElementId(clone.id);
   };
 
   const handleChangeElementColor = (id: string, color: string) => {
-    const nextElements = canvasDoc.elements.map(el =>
-      el.id === id ? { ...el, color } : el
-    );
-    pushHistory(nextElements);
+    const next = canvasDoc.elements.map(el => (el.id === id ? { ...el, color } : el));
+    pushHistory(next);
+  };
+
+  const handleChangeConnectorStyle = (id: string, style: ConnectorStyle) => {
+    const next = canvasDoc.elements.map(el => (el.id === id ? { ...el, connectorStyle: style } : el));
+    pushHistory(next);
+  };
+
+  const handleChangeArrowHeadType = (id: string, head: ArrowHeadType) => {
+    const next = canvasDoc.elements.map(el => (el.id === id ? { ...el, arrowHeadType: head } : el));
+    pushHistory(next);
   };
 
   const handleExportSvg = () => {
-    const svg = document.getElementById('notemesh-canvas-svg');
-    if (!svg) return;
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const svgEl = document.getElementById('notemesh-canvas-svg');
+    if (!svgEl) return;
+    const xml = new XMLSerializer().serializeToString(svgEl);
+    const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -290,18 +462,29 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const selectedElement = canvasDoc.elements.find(el => el.id === selectedElementId);
+
   return (
     <div
       ref={containerRef}
       onMouseDown={handleCanvasMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      className="relative w-full h-[calc(100vh-3.5rem)] bg-background overflow-hidden select-none"
+      className="relative w-full h-[calc(100vh-5.5rem)] bg-background overflow-hidden select-none font-sans"
     >
-      {/* Top Toolbar */}
+      {/* Top Toolbar with Multiple Shapes and Arrow Options */}
       <CanvasToolbar
         activeTool={activeTool}
         setActiveTool={setActiveTool}
+        connectorStyle={connectorStyle}
+        setConnectorStyle={setConnectorStyle}
+        arrowHeadType={arrowHeadType}
+        setArrowHeadType={setArrowHeadType}
+        isAutoConnecting={isAutoConnecting}
+        onToggleAutoConnect={() => {
+          setIsAutoConnecting(!isAutoConnecting);
+          setConnectSourceId(null);
+        }}
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
         onUndo={handleUndo}
@@ -312,31 +495,100 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
         onExportSvg={handleExportSvg}
       />
 
+      {/* Auto-Connect Prompt Banner */}
+      {isAutoConnecting && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-indigo-600 text-white px-4 py-1.5 rounded-full shadow-xl text-xs font-semibold flex items-center space-x-2 animate-bounce">
+          <Workflow className="w-4 h-4" />
+          <span>
+            {connectSourceId 
+              ? 'Click target shape to complete connection' 
+              : 'Click first shape to start connector'}
+          </span>
+        </div>
+      )}
+
       {/* Selected Element Quick Palette */}
-      {selectedElementId && (
-        <div className="absolute top-18 left-1/2 -translate-x-1/2 z-10 flex items-center bg-surface/90 backdrop-blur-md border border-border px-3 py-1.5 rounded-lg shadow-md space-x-2 text-xs">
-          <span className="text-gray-400 font-medium">Color:</span>
-          {['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#fef08a', '#1e293b'].map(c => (
-            <button
-              key={c}
-              onClick={() => handleChangeElementColor(selectedElementId, c)}
-              className="w-4 h-4 rounded-full border border-black/20 hover:scale-110 transition-transform"
-              style={{ backgroundColor: c }}
-            />
-          ))}
-          <div className="h-4 w-[1px] bg-border mx-1" />
+      {selectedElement && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 flex items-center bg-surface/95 dark:bg-slate-900/95 backdrop-blur-md border border-border dark:border-slate-800 px-3.5 py-1.5 rounded-xl shadow-xl space-x-2 text-xs">
+          {selectedElement.type === 'connector' ? (
+            /* Connector Specific Options */
+            <div className="flex items-center space-x-1.5">
+              <span className="text-slate-400 font-bold">Arrow:</span>
+              <button
+                onClick={() => handleChangeConnectorStyle(selectedElement.id, 'curved')}
+                title="Curved Flow"
+                className={`p-1 rounded ${selectedElement.connectorStyle === 'curved' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              >
+                <Spline className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleChangeConnectorStyle(selectedElement.id, 'orthogonal')}
+                title="90° Step Orthogonal"
+                className={`p-1 rounded ${selectedElement.connectorStyle === 'orthogonal' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              >
+                <GitCommit className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleChangeConnectorStyle(selectedElement.id, 'straight')}
+                title="Straight Arrow"
+                className={`p-1 rounded ${selectedElement.connectorStyle === 'straight' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              >
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => handleChangeArrowHeadType(
+                  selectedElement.id, 
+                  selectedElement.arrowHeadType === 'both' ? 'end' : 'both'
+                )}
+                title="Toggle Bidirectional Arrow"
+                className={`px-1.5 py-0.5 rounded text-xs font-mono font-bold ${
+                  selectedElement.arrowHeadType === 'both' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                &lt;-&gt;
+              </button>
+            </div>
+          ) : (
+            /* Shape Specific Options */
+            <>
+              <button
+                onClick={() => {
+                  setIsAutoConnecting(true);
+                  setConnectSourceId(selectedElement.id);
+                }}
+                className="flex items-center space-x-1 px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 font-semibold"
+                title="Connect arrow from this shape to another"
+              >
+                <Workflow className="w-3.5 h-3.5" />
+                <span>Connect To...</span>
+              </button>
+              <div className="h-4 w-[1px] bg-slate-800 mx-1" />
+              <span className="text-slate-400 font-bold">Color:</span>
+              {['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#fef08a', '#1e293b'].map(c => (
+                <button
+                  key={c}
+                  onClick={() => handleChangeElementColor(selectedElement.id, c)}
+                  className="w-4 h-4 rounded-full border border-black/20 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </>
+          )}
+
+          <div className="h-4 w-[1px] bg-slate-800 mx-1" />
           <button
             onClick={handleDuplicateSelected}
-            className="text-gray-600 dark:text-gray-300 hover:text-primary flex items-center space-x-1"
-            title="Duplicate element"
+            className="text-slate-300 hover:text-indigo-400 flex items-center space-x-1"
+            title="Duplicate"
           >
             <Copy className="w-3.5 h-3.5" />
             <span>Duplicate</span>
           </button>
-          <div className="h-4 w-[1px] bg-border mx-1" />
+          <div className="h-4 w-[1px] bg-slate-800 mx-1" />
           <button
             onClick={handleDeleteSelected}
-            className="text-rose-500 hover:text-rose-600 flex items-center space-x-1"
+            className="text-rose-400 hover:text-rose-500 flex items-center space-x-1"
+            title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Delete</span>
@@ -346,13 +598,13 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
 
       {/* Linked Note Picker Modal */}
       {isNoteSelectorOpen && (
-        <div className="absolute inset-0 z-30 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl p-4 w-96 shadow-xl space-y-3">
-            <h3 className="font-semibold text-sm">Select Note to Embed as Card</h3>
-            <p className="text-xs text-gray-500">
+        <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface dark:bg-[#111827] border border-border dark:border-slate-800 rounded-2xl p-5 w-96 shadow-2xl space-y-3">
+            <h3 className="font-bold text-base text-slate-100">Select Note to Embed as Card</h3>
+            <p className="text-xs text-slate-400">
               This card will display the note preview and connect to it interactively.
             </p>
-            <div className="max-h-60 overflow-y-auto space-y-1">
+            <div className="max-h-60 overflow-y-auto space-y-1 mt-2">
               {notes.map(note => (
                 <div
                   key={note.id}
@@ -360,17 +612,17 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                     createElementAt('note-card', 200, 200, note);
                     setIsNoteSelectorOpen(false);
                   }}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-surface-hover cursor-pointer text-xs"
+                  className="flex items-center space-x-2.5 p-2.5 rounded-xl hover:bg-slate-800 cursor-pointer text-xs font-semibold text-slate-200"
                 >
-                  <FileText className="w-3.5 h-3.5 text-primary" />
-                  <span className="font-medium text-gray-800 dark:text-gray-200 truncate">{note.title}</span>
+                  <FileText className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span className="truncate">{note.title}</span>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end pt-2 border-t border-border">
+            <div className="flex justify-end pt-3 border-t border-slate-800">
               <button
                 onClick={() => setIsNoteSelectorOpen(false)}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+                className="px-3.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-white"
               >
                 Cancel
               </button>
@@ -397,12 +649,12 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                 cx="12"
                 cy="12"
                 r="1"
-                fill={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}
+                fill={isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}
               />
             </pattern>
           )}
 
-          {/* Arrow marker */}
+          {/* Forward Arrow marker */}
           <marker
             id="arrowhead"
             markerWidth="10"
@@ -413,7 +665,22 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           >
             <polygon
               points="0 0, 10 3.5, 0 7"
-              fill={isDarkMode ? '#94a3b8' : '#64748b'}
+              fill={isDarkMode ? '#818cf8' : '#6366f1'}
+            />
+          </marker>
+
+          {/* Reverse Arrow marker for Bidirectional Arrows */}
+          <marker
+            id="arrowhead-start"
+            markerWidth="10"
+            markerHeight="7"
+            refX="1"
+            refY="3.5"
+            orient="auto"
+          >
+            <polygon
+              points="10 0, 0 3.5, 10 7"
+              fill={isDarkMode ? '#818cf8' : '#6366f1'}
             />
           </marker>
         </defs>
@@ -428,9 +695,9 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           fill={canvasDoc.gridEnabled ? 'url(#grid-pattern)' : 'transparent'}
         />
 
-        {/* Transformed Group */}
+        {/* Pan and Zoom Layer */}
         <g transform={`translate(${pan.x}, ${pan.y}) scale(${pan.zoom})`}>
-          {/* Connectors First */}
+          {/* Connectors / Arrows */}
           {canvasDoc.elements
             .filter(el => el.type === 'connector')
             .map(el => {
@@ -439,40 +706,84 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
               const x2 = el.toPoint?.x || el.x + 100;
               const y2 = el.toPoint?.y || el.y + 50;
 
+              const style = el.connectorStyle || 'curved';
+              let pathD = '';
+
+              if (style === 'straight') {
+                pathD = `M ${x1} ${y1} L ${x2} ${y2}`;
+              } else if (style === 'orthogonal') {
+                const midX = (x1 + x2) / 2;
+                pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+              } else {
+                // Curved Bezier
+                const midX = (x1 + x2) / 2;
+                pathD = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+              }
+
+              const isSelected = selectedElementId === el.id;
+              const hasStartArrow = el.arrowHeadType === 'both';
+
               return (
-                <g key={el.id} onMouseDown={e => handleElementMouseDown(e, el)}>
+                <g key={el.id} onMouseDown={e => handleElementMouseDown(e, el)} className="cursor-pointer">
+                  {/* Invisible wider hit-area */}
                   <path
-                    d={`M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`}
+                    d={pathD}
                     fill="none"
-                    stroke={selectedElementId === el.id ? '#3b82f6' : (isDarkMode ? '#94a3b8' : '#64748b')}
-                    strokeWidth="2"
+                    stroke="transparent"
+                    strokeWidth="14"
+                  />
+                  {/* Visual Line */}
+                  <path
+                    d={pathD}
+                    fill="none"
+                    stroke={isSelected ? '#6366f1' : (isDarkMode ? '#818cf8' : '#4f46e5')}
+                    strokeWidth={isSelected ? '2.5' : '2'}
+                    strokeDasharray={style === 'dashed' ? '6,4' : undefined}
+                    markerStart={hasStartArrow ? 'url(#arrowhead-start)' : undefined}
                     markerEnd="url(#arrowhead)"
                   />
                 </g>
               );
             })}
 
-          {/* Other Elements */}
+          {/* Shapes & Note Cards */}
           {canvasDoc.elements
             .filter(el => el.type !== 'connector')
             .map(el => {
               const isSelected = selectedElementId === el.id;
+              const isConnectSource = connectSourceId === el.id;
 
               return (
                 <g
                   key={el.id}
                   transform={`translate(${el.x}, ${el.y})`}
                   onMouseDown={e => handleElementMouseDown(e, el)}
-                  className="cursor-move"
+                  className="cursor-move group"
                 >
+                  {/* Active Auto-Connect glowing halo */}
+                  {isConnectSource && (
+                    <rect
+                      x="-6"
+                      y="-6"
+                      width={el.width + 12}
+                      height={el.height + 12}
+                      rx="14"
+                      fill="none"
+                      stroke="#6366f1"
+                      strokeWidth="3"
+                      strokeDasharray="6,4"
+                      className="animate-pulse"
+                    />
+                  )}
+
                   {/* Rectangle */}
                   {el.type === 'rectangle' && (
                     <rect
                       width={el.width}
                       height={el.height}
-                      rx="8"
-                      fill={el.color || '#ffffff'}
-                      stroke={isSelected ? '#3b82f6' : (el.strokeColor || '#94a3b8')}
+                      rx="10"
+                      fill={el.color || '#1e293b'}
+                      stroke={isSelected ? '#6366f1' : (el.strokeColor || '#475569')}
                       strokeWidth={isSelected ? '2.5' : '1.5'}
                     />
                   )}
@@ -482,8 +793,8 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                     <polygon
                       points={`${el.width / 2},0 ${el.width},${el.height / 2} ${el.width / 2},${el.height} 0,${el.height / 2}`}
                       fill={el.color || '#8b5cf6'}
-                      stroke={isSelected ? '#3b82f6' : 'rgba(0,0,0,0.1)'}
-                      strokeWidth={isSelected ? '2.5' : '1'}
+                      stroke={isSelected ? '#ffffff' : 'rgba(0,0,0,0.15)'}
+                      strokeWidth={isSelected ? '2.5' : '1.5'}
                     />
                   )}
 
@@ -495,8 +806,50 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                       rx={el.width / 2}
                       ry={el.height / 2}
                       fill={el.color || '#06b6d4'}
-                      stroke={isSelected ? '#3b82f6' : 'rgba(0,0,0,0.1)'}
-                      strokeWidth={isSelected ? '2.5' : '1'}
+                      stroke={isSelected ? '#ffffff' : 'rgba(0,0,0,0.15)'}
+                      strokeWidth={isSelected ? '2.5' : '1.5'}
+                    />
+                  )}
+
+                  {/* Cylinder (Database) */}
+                  {el.type === 'cylinder' && (
+                    <g>
+                      <path
+                        d={`M 0 16 L 0 ${el.height - 16} A ${el.width / 2} 16 0 0 0 ${el.width} ${el.height - 16} L ${el.width} 16 Z`}
+                        fill={el.color || '#1e293b'}
+                        stroke={isSelected ? '#6366f1' : (el.strokeColor || '#475569')}
+                        strokeWidth={isSelected ? '2.5' : '1.5'}
+                      />
+                      <ellipse
+                        cx={el.width / 2}
+                        cy={16}
+                        rx={el.width / 2}
+                        ry={14}
+                        fill={el.color || '#1e293b'}
+                        stroke={isSelected ? '#6366f1' : (el.strokeColor || '#475569')}
+                        strokeWidth={isSelected ? '2.5' : '1.5'}
+                      />
+                    </g>
+                  )}
+
+                  {/* Cloud */}
+                  {el.type === 'cloud' && (
+                    <path
+                      d={`M 20 45 A 20 20 0 0 1 50 20 A 30 30 0 0 1 110 20 A 25 25 0 0 1 145 45 A 20 20 0 0 1 135 80 L 25 80 A 20 20 0 0 1 20 45 Z`}
+                      transform={`scale(${el.width / 160}, ${el.height / 95})`}
+                      fill={el.color || '#1e293b'}
+                      stroke={isSelected ? '#6366f1' : (el.strokeColor || '#06b6d4')}
+                      strokeWidth={isSelected ? '3' : '2'}
+                    />
+                  )}
+
+                  {/* Hexagon */}
+                  {el.type === 'hexagon' && (
+                    <polygon
+                      points={`${el.width * 0.25},0 ${el.width * 0.75},0 ${el.width},${el.height * 0.5} ${el.width * 0.75},${el.height} ${el.width * 0.25},${el.height} 0,${el.height * 0.5}`}
+                      fill={el.color || '#1e293b'}
+                      stroke={isSelected ? '#6366f1' : (el.strokeColor || '#10b981')}
+                      strokeWidth={isSelected ? '2.5' : '1.5'}
                     />
                   )}
 
@@ -508,88 +861,88 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                         height={el.height}
                         rx="4"
                         fill={el.color || '#fef08a'}
-                        filter="drop-shadow(0 4px 6px rgba(0,0,0,0.15))"
-                        stroke={isSelected ? '#3b82f6' : 'rgba(0,0,0,0.1)'}
+                        stroke={isSelected ? '#6366f1' : 'rgba(0,0,0,0.1)'}
                         strokeWidth={isSelected ? '2' : '1'}
-                      />
-                      <rect
-                        width={el.width}
-                        height="14"
-                        rx="2"
-                        fill="rgba(0,0,0,0.06)"
                       />
                     </g>
                   )}
 
-                  {/* Linked Note Card (Special Interactive Card) */}
+                  {/* Linked Note Card */}
                   {el.type === 'note-card' && (
                     <g>
                       <rect
                         width={el.width}
                         height={el.height}
-                        rx="8"
-                        fill={isDarkMode ? '#1e293b' : '#ffffff'}
-                        stroke={isSelected ? '#3b82f6' : '#3b82f6'}
+                        rx="12"
+                        fill={isDarkMode ? '#0d121f' : '#ffffff'}
+                        stroke={isSelected ? '#6366f1' : '#6366f1'}
                         strokeWidth="2"
-                        filter="drop-shadow(0 4px 10px rgba(59, 130, 246, 0.15))"
+                        filter="drop-shadow(0 4px 14px rgba(99, 102, 241, 0.2))"
                       />
-                      {/* Top Header Bar */}
                       <rect
                         width={el.width}
-                        height="26"
-                        rx="6"
-                        fill="#3b82f6"
+                        height="28"
+                        rx="10"
+                        fill="#6366f1"
                       />
                       <text
-                        x="10"
-                        y="17"
+                        x="12"
+                        y="18"
                         fill="#ffffff"
-                        fontSize="11"
-                        fontWeight="600"
-                        fontFamily="Inter, sans-serif"
+                        fontSize="12"
+                        fontWeight="700"
+                        fontFamily="Poppins, sans-serif"
                       >
                         {el.linkedNoteTitle || 'Note'}
                       </text>
                     </g>
                   )}
 
-                  {/* Editable Text / ForeignObject HTML */}
+                  {/* Editable Text / ForeignObject */}
                   <foreignObject
-                    x={el.type === 'note-card' ? '10' : '8'}
-                    y={el.type === 'note-card' ? '32' : '8'}
+                    x={el.type === 'note-card' ? '12' : '8'}
+                    y={el.type === 'note-card' ? '34' : '8'}
                     width={el.width - 16}
-                    height={el.type === 'note-card' ? el.height - 40 : el.height - 16}
+                    height={el.height - (el.type === 'note-card' ? 42 : 16)}
                   >
-                    <div className="w-full h-full flex flex-col justify-between">
+                    <div
+                      onDoubleClick={() => setEditingElementId(el.id)}
+                      className="w-full h-full flex flex-col justify-center items-center text-center p-1 select-text"
+                    >
                       {editingElementId === el.id ? (
                         <textarea
                           autoFocus
                           value={el.text || ''}
-                          onChange={e => handleUpdateElementText(el.id, e.target.value)}
-                          onBlur={() => setEditingElementId(null)}
-                          className="w-full h-full bg-transparent text-xs resize-none focus:outline-none p-1 font-medium"
-                          style={{ color: el.type === 'sticky' ? '#000000' : 'inherit' }}
+                          onChange={e => {
+                            const val = e.target.value;
+                            const next = canvasDoc.elements.map(item =>
+                              item.id === el.id ? { ...item, text: val } : item
+                            );
+                            onUpdateCanvas({ ...canvasDoc, elements: next });
+                          }}
+                          onBlur={() => {
+                            setEditingElementId(null);
+                            pushHistory(canvasDoc.elements);
+                          }}
+                          className="w-full h-full bg-transparent resize-none border-none focus:outline-none text-xs font-semibold text-center text-slate-100"
                         />
                       ) : (
-                        <div
-                          onDoubleClick={() => setEditingElementId(el.id)}
-                          className="w-full h-full text-xs overflow-hidden text-ellipsis p-1 font-medium select-none"
-                          style={{
-                            color: el.type === 'sticky' ? '#1f2937' : (el.type === 'note-card' ? (isDarkMode ? '#cbd5e1' : '#475569') : 'inherit'),
-                          }}
-                        >
-                          {el.text || 'Double-click to edit'}
-                        </div>
+                        <span className={`text-xs font-bold leading-tight line-clamp-3 ${
+                          el.type === 'sticky' ? 'text-amber-950 font-medium' : 'text-slate-100'
+                        }`}>
+                          {el.text || 'Type here...'}
+                        </span>
                       )}
 
-                      {/* Jump button on linked note card */}
+                      {/* Jump to note button on Note Card */}
                       {el.type === 'note-card' && el.linkedNoteId && (
                         <button
                           onClick={e => {
                             e.stopPropagation();
                             onOpenNote(el.linkedNoteId!);
                           }}
-                          className="flex items-center space-x-1 text-[10px] text-primary hover:underline font-semibold mt-1"
+                          className="mt-2 flex items-center space-x-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-xs font-bold transition-all shadow-sm"
+                          title="Open full note in editor"
                         >
                           <span>Open Note</span>
                           <ExternalLink className="w-3 h-3" />
@@ -604,26 +957,29 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       </svg>
 
       {/* Bottom Zoom Controls */}
-      <div className="absolute bottom-4 left-4 z-10 flex items-center space-x-1 bg-surface/90 backdrop-blur-md border border-border p-1 rounded-lg shadow-md text-gray-500">
+      <div className="absolute bottom-6 left-6 z-10 flex items-center space-x-1.5 bg-surface/90 dark:bg-slate-900/90 backdrop-blur-md border border-border dark:border-slate-800 p-1.5 rounded-xl shadow-xl text-slate-400">
         <button
           onClick={() => setPan(p => ({ ...p, zoom: Math.min(2.5, p.zoom * 1.2) }))}
-          className="p-1.5 hover:bg-surface-hover rounded hover:text-primary transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg hover:text-indigo-400 transition-colors"
+          title="Zoom In"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={() => setPan(p => ({ ...p, zoom: Math.max(0.3, p.zoom / 1.2) }))}
-          className="p-1.5 hover:bg-surface-hover rounded hover:text-primary transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg hover:text-indigo-400 transition-colors"
+          title="Zoom Out"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
         <button
           onClick={() => setPan({ x: 50, y: 50, zoom: 1 })}
-          className="p-1.5 hover:bg-surface-hover rounded hover:text-primary transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg hover:text-indigo-400 transition-colors"
+          title="Recenter"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
-        <span className="text-[10px] font-mono px-1.5">{Math.round(pan.zoom * 100)}%</span>
+        <span className="text-xs font-mono font-semibold px-2 text-slate-300">{Math.round(pan.zoom * 100)}%</span>
       </div>
     </div>
   );

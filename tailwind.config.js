@@ -13,9 +13,9 @@ export default {
         'surface-hover': 'var(--color-surface-hover)',
         border: 'var(--color-border)',
         primary: {
-          DEFAULT: '#3b82f6',
-          hover: '#2563eb',
-          light: '#60a5fa',
+          DEFAULT: '#6366f1',
+          hover: '#4f46e5',
+          light: '#818cf8',
         },
         accent: {
           cyan: '#06b6d4',
@@ -26,8 +26,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans: ['Poppins', 'Arial', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['"Merriweather Sans"', 'Poppins', 'Arial', 'sans-serif'],
+        serif: ['"Times New Roman"', 'Times', 'serif'],
+        mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
       }
     },
   },

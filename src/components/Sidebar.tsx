@@ -4,14 +4,15 @@ import {
   FileText, 
   Pin, 
   Trash2, 
-  Tag as TagIcon, 
   Folder, 
+  FolderOpen,
   ChevronRight, 
   ChevronDown,
   Search,
   Plus,
   Calendar,
-  Upload
+  Upload,
+  Tag as TagIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -40,19 +41,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onImportMarkdown,
 }) => {
   const [search, setSearch] = useState('');
-  const [foldersOpen, setFoldersOpen] = useState(true);
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [tagsOpen, setTagsOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Extract unique tags
+  const toggleFolder = (folderName: string) => {
+    setCollapsedFolders(prev => ({
+      ...prev,
+      [folderName]: !prev[folderName],
+    }));
+  };
+
   const allTags = Array.from(new Set(notes.flatMap(n => n.tags))).sort();
 
-  // Extract folders
   const allFolders = Array.from(
     new Set(notes.map(n => n.folder || 'General'))
   ).sort();
 
-  // Filter notes based on search & selected tag
   const filteredNotes = notes.filter(n => {
     const matchesSearch = 
       n.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -78,20 +83,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="w-64 border-r border-border bg-surface flex flex-col h-[calc(100vh-3.5rem)] select-none">
-      {/* Search Header */}
-      <div className="p-3 border-b border-border space-y-2">
+    <aside className="w-72 border-r border-border dark:border-slate-800/80 bg-surface dark:bg-[#0c101d] flex flex-col h-[calc(100vh-5.5rem)] select-none">
+      {/* Header Actions */}
+      <div className="p-3.5 border-b border-border dark:border-slate-800/80 space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Explorer
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-sans">
+              Explorer
+            </span>
+          </div>
           <div className="flex items-center space-x-1">
             <button
               onClick={() => fileInputRef.current?.click()}
               title="Import Markdown (.md)"
-              className="p-1 hover:bg-surface-hover rounded text-gray-500 hover:text-primary transition-colors"
+              className="p-1.5 hover:bg-surface-hover dark:hover:bg-slate-800/80 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors"
             >
-              <Upload className="w-3.5 h-3.5" />
+              <Upload className="w-4 h-4" />
             </button>
             <input
               ref={fileInputRef}
@@ -102,47 +109,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
             <button
               onClick={() => onNewNote()}
-              title="Create Note"
-              className="p-1 hover:bg-surface-hover rounded text-gray-500 hover:text-primary transition-colors"
+              title="Create New Note"
+              className="p-1.5 hover:bg-surface-hover dark:hover:bg-slate-800/80 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors"
             >
               <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Quick Actions (Daily Note) */}
+        {/* Today's Daily Note Quick Action */}
         <button
           onClick={onOpenDailyNote}
-          className="w-full flex items-center justify-center space-x-2 py-1.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-primary border border-blue-500/20 text-xs font-medium transition-colors"
+          className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/25 text-xs font-semibold transition-all shadow-sm"
         >
-          <Calendar className="w-3.5 h-3.5" />
+          <Calendar className="w-4 h-4" />
           <span>Today's Daily Note</span>
         </button>
 
+        {/* Filter input */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Filter notes..."
+            placeholder="Search notes..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-8 pr-2 py-1 text-xs rounded-md bg-surface-hover/70 border border-border focus:outline-none focus:border-primary text-gray-800 dark:text-gray-200 placeholder:text-gray-400 transition-colors"
+            className="w-full pl-9 pr-3 py-1.5 text-xs font-medium rounded-xl bg-surface-hover/60 dark:bg-slate-800/50 border border-border dark:border-slate-700/60 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder:text-slate-500 transition-colors"
           />
         </div>
       </div>
 
-      {/* Note List Scroll Area */}
-      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
-        {/* Pinned Notes Section */}
+      {/* VS Code / GitHub Tree Explorer */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-3 font-sans">
+        {/* Pinned Section */}
         {pinnedNotes.length > 0 && (
-          <div>
-            <div className="flex items-center space-x-1 px-2 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-              <Pin className="w-3 h-3 text-amber-500" />
-              <span>Pinned</span>
+          <div className="space-y-1">
+            <div className="flex items-center space-x-1.5 px-2 py-0.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <Pin className="w-3.5 h-3.5 text-amber-400" />
+              <span>Pinned Notes</span>
             </div>
-            <div className="space-y-0.5 mt-1">
+            <div className="space-y-0.5">
               {pinnedNotes.map(note => (
-                <NoteListItem
+                <TreeNodeItem
                   key={note.id}
                   note={note}
                   isActive={note.id === activeNoteId}
@@ -155,93 +163,113 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Folders & All Notes Section */}
-        <div>
-          <div 
-            onClick={() => setFoldersOpen(!foldersOpen)}
-            className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <div className="flex items-center space-x-1">
-              {foldersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-              <Folder className="w-3 h-3" />
-              <span>Folders & Notes ({filteredNotes.length})</span>
-            </div>
-          </div>
+        {/* Folder Hierarchy Tree */}
+        <div className="space-y-1">
+          {allFolders.map(folderName => {
+            const folderNotes = filteredNotes.filter(
+              n => (n.folder || 'General') === folderName && !n.isPinned
+            );
+            if (folderNotes.length === 0) return null;
+            const isCollapsed = collapsedFolders[folderName] || false;
 
-          {foldersOpen && (
-            <div className="space-y-2 mt-1">
-              {allFolders.map(folderName => {
-                const folderNotes = filteredNotes.filter(
-                  n => (n.folder || 'General') === folderName && !n.isPinned
-                );
-                if (folderNotes.length === 0) return null;
-
-                return (
-                  <div key={folderName} className="space-y-0.5">
-                    <div className="flex items-center space-x-1 px-2 py-1 text-[10px] font-semibold text-gray-400 uppercase">
-                      <Folder className="w-2.5 h-2.5 text-amber-500/70" />
-                      <span>{folderName} ({folderNotes.length})</span>
-                    </div>
-                    {folderNotes.map(note => (
-                      <NoteListItem
-                        key={note.id}
-                        note={note}
-                        isActive={note.id === activeNoteId}
-                        onSelect={() => onSelectNote(note.id)}
-                        onDelete={() => onDeleteNote(note.id)}
-                        onTogglePin={() => onTogglePin(note.id)}
-                      />
-                    ))}
+            return (
+              <div key={folderName} className="space-y-0.5">
+                {/* Folder Header (VS Code / GitHub style) */}
+                <div
+                  onClick={() => toggleFolder(folderName)}
+                  className="group flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-surface-hover dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center space-x-1.5 min-w-0">
+                    <span className="text-slate-400 group-hover:text-slate-200 transition-transform duration-150">
+                      {isCollapsed ? (
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </span>
+                    {isCollapsed ? (
+                      <Folder className="w-4 h-4 text-amber-400/90" />
+                    ) : (
+                      <FolderOpen className="w-4 h-4 text-amber-400" />
+                    )}
+                    <span className="truncate">{folderName}</span>
                   </div>
-                );
-              })}
-
-              {filteredNotes.length === 0 && (
-                <div className="text-center py-6 px-4">
-                  <p className="text-xs text-gray-400">No notes found.</p>
+                  <span className="text-xs font-mono font-medium text-slate-500 bg-slate-800/80 px-1.5 py-0.2 rounded border border-slate-700/40">
+                    {folderNotes.length}
+                  </span>
                 </div>
-              )}
+
+                {/* Nested Tree Branch with vertical guide line (GitHub/VS Code tree indicator) */}
+                {!isCollapsed && (
+                  <div className="relative ml-4 pl-3.5 my-0.5 space-y-0.5 border-l border-indigo-500/25">
+                    {folderNotes.map((note, index) => {
+                      const isLast = index === folderNotes.length - 1;
+                      return (
+                        <TreeNodeItem
+                          key={note.id}
+                          note={note}
+                          isActive={note.id === activeNoteId}
+                          isTreeChild
+                          isLastChild={isLast}
+                          onSelect={() => onSelectNote(note.id)}
+                          onDelete={() => onDeleteNote(note.id)}
+                          onTogglePin={() => onTogglePin(note.id)}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filteredNotes.length === 0 && (
+            <div className="text-center py-6 px-4">
+              <p className="text-xs font-medium text-slate-500">No matching notes found.</p>
             </div>
           )}
         </div>
 
-        {/* Tags Section */}
+        {/* Tags Section (Clean Tactile Chips, No Generic AI Pills) */}
         {allTags.length > 0 && (
-          <div className="pt-2 border-t border-border">
+          <div className="pt-3 border-t border-border dark:border-slate-800/80">
             <div 
               onClick={() => setTagsOpen(!tagsOpen)}
-              className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-600 dark:hover:text-gray-300"
+              className="flex items-center justify-between px-2 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-200 transition-colors"
             >
-              <div className="flex items-center space-x-1">
-                {tagsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                <TagIcon className="w-3 h-3 text-cyan-500" />
+              <div className="flex items-center space-x-1.5">
+                {tagsOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                <TagIcon className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Tags ({allTags.length})</span>
               </div>
             </div>
 
             {tagsOpen && (
-              <div className="flex flex-wrap gap-1 px-2 mt-1">
+              <div className="flex flex-wrap gap-1.5 px-2 mt-2">
                 {selectedTag && (
                   <button
                     onClick={() => onSelectTag(null)}
-                    className="text-[10px] px-2 py-0.5 rounded-full bg-primary text-white font-medium hover:bg-primary-hover"
+                    className="text-xs px-2.5 py-1 rounded-md bg-indigo-600 text-white font-bold hover:bg-indigo-500 shadow-sm transition-colors"
                   >
                     Clear Filter ✕
                   </button>
                 )}
-                {allTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => onSelectTag(tag === selectedTag ? null : tag)}
-                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
-                      tag === selectedTag
-                        ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border-cyan-500/40 font-semibold'
-                        : 'bg-surface-hover/60 text-gray-600 dark:text-gray-400 border-border hover:border-gray-400'
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
+                {allTags.map(tag => {
+                  const isSelected = tag === selectedTag;
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => onSelectTag(isSelected ? null : tag)}
+                      className={`text-xs px-2.5 py-1 rounded-md border transition-all ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-500 font-bold shadow-sm'
+                          : 'bg-slate-800/80 text-slate-300 border-slate-700/60 hover:border-slate-500 hover:text-white font-medium'
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -249,25 +277,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="p-2 border-t border-border text-[11px] text-gray-400 flex items-center justify-between">
-        <span>Local Storage: Active</span>
-        <span className="font-mono text-[10px]">{notes.length} notes</span>
+      <div className="p-3 border-t border-border dark:border-slate-800/80 text-xs font-medium text-slate-400 flex items-center justify-between">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span>Local Storage</span>
+        </span>
+        <span className="font-mono text-xs font-semibold text-slate-300">{notes.length} notes</span>
       </div>
     </aside>
   );
 };
 
-interface NoteListItemProps {
+interface TreeNodeItemProps {
   note: Note;
   isActive: boolean;
+  isTreeChild?: boolean;
+  isLastChild?: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
 }
 
-const NoteListItem: React.FC<NoteListItemProps> = ({
+const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   note,
   isActive,
+  isTreeChild,
   onSelect,
   onDelete,
   onTogglePin,
@@ -275,14 +309,27 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
   return (
     <div
       onClick={onSelect}
-      className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs cursor-pointer transition-colors ${
+      className={`group relative flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs sm:text-sm cursor-pointer transition-all ${
         isActive
-          ? 'bg-primary/10 text-primary font-medium'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-surface-hover'
+          ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/40 shadow-sm'
+          : 'text-slate-300 hover:bg-surface-hover dark:hover:bg-slate-800/60 hover:text-white font-medium'
       }`}
     >
       <div className="flex items-center space-x-2 truncate min-w-0">
-        <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-primary' : 'text-gray-400'}`} />
+        {/* Branch indicator matching user reference image */}
+        {isTreeChild ? (
+          <div className="flex items-center justify-center w-3 h-3 shrink-0">
+            <span
+              className={`w-2 h-2 rounded-full border transition-all ${
+                isActive
+                  ? 'border-indigo-400 bg-indigo-500 shadow-sm shadow-indigo-500/60 scale-110'
+                  : 'border-slate-600 bg-slate-800 group-hover:border-indigo-400'
+              }`}
+            />
+          </div>
+        ) : (
+          <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
+        )}
         <span className="truncate">{note.title || 'Untitled'}</span>
       </div>
 
@@ -293,9 +340,9 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
             onTogglePin();
           }}
           title={note.isPinned ? 'Unpin' : 'Pin note'}
-          className="p-1 hover:text-amber-500 text-gray-400"
+          className="p-1 hover:text-amber-400 text-slate-400 transition-colors"
         >
-          <Pin className={`w-3 h-3 ${note.isPinned ? 'fill-amber-500 text-amber-500' : ''}`} />
+          <Pin className={`w-3 h-3 ${note.isPinned ? 'fill-amber-400 text-amber-400' : ''}`} />
         </button>
         <button
           onClick={e => {
@@ -303,7 +350,7 @@ const NoteListItem: React.FC<NoteListItemProps> = ({
             onDelete();
           }}
           title="Delete note"
-          className="p-1 hover:text-rose-500 text-gray-400"
+          className="p-1 hover:text-rose-400 text-slate-400 transition-colors"
         >
           <Trash2 className="w-3 h-3" />
         </button>

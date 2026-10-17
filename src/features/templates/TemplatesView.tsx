@@ -40,20 +40,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex h-[calc(100vh-3.5rem)] bg-background overflow-hidden select-none">
+    <div className="flex-1 flex h-[calc(100vh-5.5rem)] bg-background overflow-hidden select-none">
       {/* Templates List Sidebar */}
-      <div className="w-80 border-r border-border bg-surface flex flex-col h-full">
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center space-x-2 text-primary font-semibold text-sm">
+      <div className="w-80 border-r border-border dark:border-slate-800 bg-surface dark:bg-[#111827]/70 flex flex-col h-full">
+        <div className="p-4 border-b border-border dark:border-slate-800">
+          <div className="flex items-center space-x-2 text-indigo-400 font-bold text-sm">
             <FileSpreadsheet className="w-4 h-4" />
             <span>Note Templates</span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1 font-medium">
             Pre-structured note formats to standardize knowledge capture.
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
           {BUILT_IN_TEMPLATES.map(tpl => {
             const isSelected = selectedTemplate.id === tpl.id;
             return (
@@ -63,28 +63,28 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
                   setSelectedTemplate(tpl);
                   setNoteTitle('');
                 }}
-                className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                   isSelected
-                    ? 'border-primary/50 bg-primary/10 shadow-sm'
-                    : 'border-border bg-surface-hover/40 hover:bg-surface-hover'
+                    ? 'border-indigo-500/50 bg-indigo-500/10 shadow-sm'
+                    : 'border-border dark:border-slate-800 bg-surface-hover/40 dark:bg-slate-800/40 hover:bg-surface-hover'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs font-semibold ${isSelected ? 'text-primary' : 'text-gray-900 dark:text-gray-100'}`}>
+                  <span className={`text-xs font-bold ${isSelected ? 'text-indigo-400' : 'text-slate-900 dark:text-slate-100'}`}>
                     {tpl.name}
                   </span>
-                  <span className="text-[10px] text-gray-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono font-semibold">
                     {tpl.folder}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1 line-clamp-2">
+                <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">
                   {tpl.description}
                 </p>
-                <div className="flex items-center flex-wrap gap-1 mt-2">
+                <div className="flex items-center flex-wrap gap-1 mt-2.5">
                   {tpl.tags.map(tag => (
                     <span
                       key={tag}
-                      className="text-[9px] px-1.5 py-0.2 rounded bg-surface border border-border text-gray-400"
+                      className="text-xs px-2 py-0.5 rounded-full bg-surface dark:bg-slate-900 border border-border dark:border-slate-700 text-slate-300 font-medium"
                     >
                       #{tag}
                     </span>
@@ -99,37 +99,37 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
       {/* Template Preview and Configuration Main Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
         {/* Header */}
-        <div className="p-6 border-b border-border bg-surface shrink-0 flex items-center justify-between">
+        <div className="p-6 border-b border-border dark:border-slate-800 bg-surface dark:bg-[#111827]/70 shrink-0 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {selectedTemplate.name}
             </h2>
-            <div className="flex items-center space-x-3 text-xs text-gray-500 mt-1">
-              <span className="flex items-center space-x-1">
-                <Folder className="w-3.5 h-3.5 text-amber-500" />
+            <div className="flex items-center space-x-3 text-xs font-semibold text-slate-400 mt-1.5">
+              <span className="flex items-center space-x-1.5">
+                <Folder className="w-4 h-4 text-amber-400" />
                 <span>Target Folder: {selectedTemplate.folder}</span>
               </span>
               <span>•</span>
-              <span className="flex items-center space-x-1">
-                <TagIcon className="w-3.5 h-3.5 text-cyan-500" />
+              <span className="flex items-center space-x-1.5">
+                <TagIcon className="w-4 h-4 text-cyan-400" />
                 <span>Tags: {selectedTemplate.tags.join(', ')}</span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <button
               onClick={handleCopyPreview}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-medium transition-colors"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-border dark:border-slate-800 bg-surface dark:bg-slate-800 hover:bg-surface-hover text-xs font-semibold text-slate-300 transition-colors"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
               <span>{copied ? 'Copied' : 'Copy Template'}</span>
             </button>
             <button
               onClick={handleCreate}
-              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium shadow-sm transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span>Create Note</span>
             </button>
           </div>
@@ -138,33 +138,33 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
         {/* Content Creation Form & Live Preview */}
         <div className="p-6 flex-1 overflow-y-auto space-y-4">
           <div className="max-w-3xl">
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
               Custom Note Title (Optional)
             </label>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <input
                 type="text"
                 placeholder={`e.g. ${selectedTemplate.name} - ${dateStr}`}
                 value={noteTitle}
                 onChange={e => setNoteTitle(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-lg bg-surface border border-border focus:outline-none focus:border-primary text-gray-800 dark:text-gray-200"
+                className="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl bg-surface dark:bg-slate-800/80 border border-border dark:border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100"
               />
               <button
                 onClick={handleCreate}
-                className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-primary text-white text-xs font-medium shrink-0"
+                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold shrink-0 transition-colors"
               >
                 <span>Generate</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="max-w-3xl border border-border rounded-xl bg-surface overflow-hidden shadow-sm">
-            <div className="px-4 py-2 border-b border-border bg-surface-hover/40 text-[11px] font-mono text-gray-400 flex items-center justify-between">
+          <div className="max-w-3xl border border-border dark:border-slate-800 rounded-2xl bg-surface dark:bg-[#111827]/80 overflow-hidden shadow-xl">
+            <div className="px-5 py-2.5 border-b border-border dark:border-slate-800 bg-surface-hover/40 dark:bg-slate-900/40 text-xs font-mono font-semibold text-slate-400 flex items-center justify-between">
               <span>Preview: {noteTitle || selectedTemplate.name}.md</span>
               <span>Markdown</span>
             </div>
-            <pre className="p-5 font-mono text-xs text-gray-800 dark:text-gray-200 leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-primary/20">
+            <pre className="p-6 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-indigo-500/20">
               {previewContent}
             </pre>
           </div>

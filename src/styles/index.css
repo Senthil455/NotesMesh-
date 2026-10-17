@@ -12,26 +12,27 @@
 }
 
 .dark {
-  --color-bg: #0b0f19;
-  --color-surface: #111827;
-  --color-surface-hover: #1f2937;
-  --color-border: #1f293d;
+  --color-bg: #070a12;
+  --color-surface: #0d121f;
+  --color-surface-hover: #161e31;
+  --color-border: #1a233a;
   --color-text: #f8fafc;
   --color-text-muted: #94a3b8;
 }
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -39,39 +40,64 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
-  border-radius: 3px;
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* Tree Guide Lines (VS Code / GitHub Style) */
+.tree-branch-line {
+  position: relative;
+}
+
+.tree-branch-line::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(99, 102, 241, 0.2);
+}
+
+.dark .tree-branch-line::before {
+  background-color: rgba(99, 102, 241, 0.25);
 }
 
 /* Markdown Preview Typography */
 .markdown-body {
+  font-family: 'Merriweather Sans', 'Poppins', Arial, sans-serif;
   font-size: 0.95rem;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .markdown-body h1 {
-  font-size: 1.85rem;
-  font-weight: 700;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 2.1rem;
+  font-weight: 800;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.3rem;
+  padding-bottom: 0.35rem;
+  letter-spacing: -0.025em;
 }
 
 .markdown-body h2 {
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
 }
 
 .markdown-body h3 {
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
   margin-top: 1rem;
   margin-bottom: 0.4rem;
 }
@@ -94,7 +120,7 @@ body {
 }
 
 .markdown-body blockquote {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #6366f1;
   padding-left: 1rem;
   color: var(--color-text-muted);
   margin: 1rem 0;
@@ -104,13 +130,13 @@ body {
 .markdown-body code {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85em;
-  background-color: rgba(120, 140, 180, 0.15);
+  background-color: rgba(99, 102, 241, 0.12);
   padding: 0.15rem 0.35rem;
   border-radius: 4px;
 }
 
 .markdown-body pre {
-  background-color: #0f172a;
+  background-color: #0b0f19;
   color: #f8fafc;
   padding: 1rem;
   border-radius: 8px;
@@ -126,12 +152,22 @@ body {
 
 /* Interactive Wikilink pill */
 .wikilink-pill {
-  transition: all 0.15s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
 }
 
 .wikilink-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+/* Tactile Card Transitions */
+.tactile-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tactile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
 }
